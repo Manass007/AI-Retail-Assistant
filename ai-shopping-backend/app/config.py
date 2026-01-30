@@ -12,9 +12,11 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str
     
-    # SendGrid
-    SENDGRID_API_KEY: Optional[str] = None
-    SENDGRID_FROM_EMAIL: str = "noreply@yourstore.com"
+    # SMTP (Gmail)
+    EMAIL_HOST: str = "smtp.gmail.com"
+    EMAIL_PORT: int = 587
+    EMAIL_USER: Optional[str] = None
+    EMAIL_PASSWORD: Optional[str] = None
     
     # JWT
     JWT_SECRET: str

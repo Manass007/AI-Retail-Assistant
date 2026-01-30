@@ -168,11 +168,40 @@ async def verify_otp_route(request: VerifyOTPRequest):
             }
         }
     else:
+        # New user: create minimal user and return token so client gets token in one step
+        user_id = f"user_{datetime.utcnow().timestamp()}"
+        new_user = {
+            "_id": user_id,
+            "email": email,
+            "name": "",
+            "phone": "",
+            "dob": None,
+            "preferences": {"categories": [], "budget": "mid"},
+            "onboarded": False,
+            "subscription": {"plan": "free", "status": "active", "start_date": None, "end_date": None},
+            "wishlist": [],
+            "cart": [],
+            "is_active": True,
+            "created_at": datetime.utcnow(),
+            "last_login": datetime.utcnow(),
+            "last_spin_date": None,
+        }
+        await db.users.insert_one(new_user)
+        token = generate_token(user_id)
         return {
             "success": True,
-            "message": "OTP verified. Please complete your registration.",
+            "message": "OTP verified. Complete your profile with PUT /api/auth/profile or POST /api/auth/register.",
             "isNewUser": True,
-            "email": email
+            "email": email,
+            "token": token,
+            "user": {
+                "id": user_id,
+                "email": email,
+                "name": "",
+                "phone": "",
+                "onboarded": False,
+                "subscription": {"plan": "free", "status": "active", "isPremium": False},
+            },
         }
 
 @router.post("/register")
@@ -187,16 +216,49 @@ async def register(request: RegisterRequest):
     if not otp_record or not otp_record.get("verified"):
         raise HTTPException(status_code=400, detail="Please verify your email with OTP first")
     
-    # Check if user already exists
     db = get_db()
     existing_user = await db.users.find_one({"email": email})
-    
+
     if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists with this email")
-    
-    # Create user
+        # User was created by verify-otp (minimal user): complete profile and return token
+        user_id = existing_user["_id"]
+        await db.users.update_one(
+            {"_id": user_id},
+            {
+                "$set": {
+                    "name": request.name,
+                    "phone": request.phone,
+                    "dob": datetime.fromisoformat(request.dob) if request.dob else None,
+                    "preferences": request.preferences,
+                    "onboarded": True,
+                    "last_login": datetime.utcnow(),
+                }
+            },
+        )
+        token = generate_token(user_id)
+        try:
+            await email_service.send_welcome_email(email, request.name)
+        except Exception as e:
+            print(f"Failed to send welcome email: {e}")
+        if email in otp_store:
+            del otp_store[email]
+        return {
+            "success": True,
+            "message": "Registration completed",
+            "token": token,
+            "user": {
+                "id": user_id,
+                "email": email,
+                "name": request.name,
+                "phone": request.phone,
+                "preferences": request.preferences,
+                "onboarded": True,
+                "subscription": {"plan": "free", "status": "active", "isPremium": False},
+            },
+        }
+
+    # Create new user (OTP verified, no user yet)
     user_id = f"user_{datetime.utcnow().timestamp()}"
-    
     new_user = {
         "_id": user_id,
         "email": email,
@@ -205,35 +267,22 @@ async def register(request: RegisterRequest):
         "dob": datetime.fromisoformat(request.dob) if request.dob else None,
         "preferences": request.preferences,
         "onboarded": True,
-        "subscription": {
-            "plan": "free",
-            "status": "active",
-            "start_date": None,
-            "end_date": None
-        },
+        "subscription": {"plan": "free", "status": "active", "start_date": None, "end_date": None},
         "wishlist": [],
         "cart": [],
         "is_active": True,
         "created_at": datetime.utcnow(),
         "last_login": datetime.utcnow(),
-        "last_spin_date": None
+        "last_spin_date": None,
     }
-    
     await db.users.insert_one(new_user)
-    
-    # Generate token
     token = generate_token(user_id)
-    
-    # Send welcome email (don't wait)
     try:
         await email_service.send_welcome_email(email, request.name)
     except Exception as e:
         print(f"Failed to send welcome email: {e}")
-    
-    # Clean up OTP
     if email in otp_store:
         del otp_store[email]
-    
     return {
         "success": True,
         "message": "Registration successful",
@@ -245,12 +294,8 @@ async def register(request: RegisterRequest):
             "phone": request.phone,
             "preferences": request.preferences,
             "onboarded": True,
-            "subscription": {
-                "plan": "free",
-                "status": "active",
-                "isPremium": False
-            }
-        }
+            "subscription": {"plan": "free", "status": "active", "isPremium": False},
+        },
     }
 
 @router.get("/me")

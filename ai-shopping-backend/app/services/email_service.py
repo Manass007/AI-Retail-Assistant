@@ -1,39 +1,46 @@
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from app.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
+
 class EmailService:
-    """Email service using SendGrid (like your nodemailer service)"""
-    
+    """Email service using SMTP (Gmail)"""
+
     def __init__(self):
         self.enabled = settings.ENABLE_EMAIL
-        if self.enabled and settings.SENDGRID_API_KEY:
-            self.client = SendGridAPIClient(settings.SENDGRID_API_KEY)
-        else:
-            self.client = None
+        self._smtp_ready = bool(
+            self.enabled and settings.EMAIL_USER and settings.EMAIL_PASSWORD
+        )
+        if not self._smtp_ready and self.enabled:
+            logger.warning("Email service disabled: set EMAIL_USER and EMAIL_PASSWORD")
+        elif not self.enabled:
             logger.warning("Email service disabled")
-    
+
     async def send_email(self, to: str, subject: str, html_content: str):
-        """Send email"""
-        if not self.enabled or not self.client:
+        """Send email via SMTP (Gmail)."""
+        if not self.enabled or not self._smtp_ready:
             logger.info(f"[MOCK EMAIL] To: {to}, Subject: {subject}")
             return {"success": True, "message": "Email service disabled"}
-        
+
         try:
-            message = Mail(
-                from_email=settings.SENDGRID_FROM_EMAIL,
-                to_emails=to,
-                subject=subject,
-                html_content=html_content
-            )
-            
-            response = self.client.send(message)
-            logger.info(f"Email sent to {to}: Status {response.status_code}")
-            return {"success": True, "messageId": response.headers.get('X-Message-Id')}
-        
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = settings.EMAIL_USER
+            msg["To"] = to
+            msg.attach(MIMEText(html_content, "html"))
+
+            with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT) as server:
+                server.starttls()
+                server.login(settings.EMAIL_USER, settings.EMAIL_PASSWORD)
+                server.sendmail(settings.EMAIL_USER, to, msg.as_string())
+
+            logger.info(f"Email sent to {to}")
+            return {"success": True}
+
         except Exception as e:
             logger.error(f"Failed to send email to {to}: {str(e)}")
             return {"success": False, "error": str(e)}

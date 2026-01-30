@@ -57,9 +57,11 @@ JWT_EXPIRE_MINUTES=43200
 OPENAI_API_KEY=sk-your-openai-api-key
 ENABLE_OPENAI=true
 
-# SendGrid (Optional)
-SENDGRID_API_KEY=SG.your-sendgrid-api-key
-SENDGRID_FROM_EMAIL=noreply@yourstore.com
+# SMTP / Gmail (Optional)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your_app_password
 ENABLE_EMAIL=false
 
 # App Configuration
@@ -457,8 +459,10 @@ All configuration is managed through environment variables loaded from `.env` fi
 | `JWT_EXPIRE_MINUTES` | No | 43200 | JWT token expiration (30 days) |
 | `OPENAI_API_KEY` | No* | - | OpenAI API key |
 | `ENABLE_OPENAI` | No | true | Enable/disable OpenAI features |
-| `SENDGRID_API_KEY` | No* | - | SendGrid API key |
-| `SENDGRID_FROM_EMAIL` | No | noreply@yourstore.com | From email address |
+| `EMAIL_HOST` | No | smtp.gmail.com | SMTP server host |
+| `EMAIL_PORT` | No | 587 | SMTP port (587 for TLS) |
+| `EMAIL_USER` | No* | - | SMTP login (e.g. Gmail address) |
+| `EMAIL_PASSWORD` | No* | - | SMTP password (Gmail: use App Password) |
 | `ENABLE_EMAIL` | No | false | Enable/disable email features |
 | `PORT` | No | 5000 | Server port |
 | `FRONTEND_URL` | No | http://localhost:3000 | Frontend URL for CORS |
