@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
 from app.database import get_db
+from app.middleware.auth import get_current_user
 from typing import Optional, List
 from datetime import datetime
 
@@ -103,8 +104,11 @@ async def get_by_category(category: str, limit: int = 20):
     }
 
 @router.post("/notify-me")
-async def notify_when_in_stock(product_id: str, user_id: str):
-    """Add stock notification request"""
+async def notify_when_in_stock(
+    product_id: str = Query(..., description="Product ID to get notified about"),
+    current_user = Depends(get_current_user)
+):
+    """Add stock notification request (requires authentication)"""
     
     db = get_db()
     
@@ -113,9 +117,22 @@ async def notify_when_in_stock(product_id: str, user_id: str):
     if not product:
         return {"success": False, "message": "Product not found"}
     
+    # Check if notification already exists
+    existing = await db.stock_notifications.find_one({
+        "user_id": current_user["_id"],
+        "product_id": product_id,
+        "notified": False
+    })
+    
+    if existing:
+        return {
+            "success": True,
+            "message": "You're already subscribed to notifications for this product"
+        }
+    
     # Add notification request
     await db.stock_notifications.insert_one({
-        "user_id": user_id,
+        "user_id": current_user["_id"],
         "product_id": product_id,
         "notified": False,
         "created_at": datetime.utcnow()

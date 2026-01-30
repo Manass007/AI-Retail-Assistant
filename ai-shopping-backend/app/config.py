@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     MONGODB_URI: str
     
     # OpenAI
-    OPENAI_API_KEY: str
+    OPENAI_API_KEY: Optional[str] = None
     
     # SendGrid
     SENDGRID_API_KEY: Optional[str] = None
