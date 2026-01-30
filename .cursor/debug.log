@@ -1,0 +1,3 @@
+{"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H1", "location": "openai_service.py:init", "message": "openai and httpx versions", "data": {"openai_version": "openai", "httpx_version": "0.28.1"}, "timestamp": 1769807254.0508642}
+{"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H1", "location": "openai_service.py:init", "message": "openai and httpx versions", "data": {"openai_version": "1.3.7", "httpx_version": "0.28.1"}, "timestamp": 1769807260.9309325}
+{"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H1", "location": "openai_service.py:init", "message": "openai and httpx versions", "data": {"openai_version": "1.3.7", "httpx_version": "0.28.1"}, "timestamp": 1769807269.3865268}
