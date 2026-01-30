@@ -2,20 +2,9 @@ from openai import OpenAI
 from app.config import settings
 from typing import List, Dict, Optional
 import logging
-import json
 
 logger = logging.getLogger(__name__)
 
-# #region agent log
-try:
-    import httpx
-    _log = {"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H1", "location": "openai_service.py:init", "message": "openai and httpx versions", "data": {"openai_version": getattr(__import__("openai"), "__version__", "?"), "httpx_version": getattr(httpx, "__version__", "?")}, "timestamp": __import__("time").time()}
-    with open("c:\\Users\\ManasKumarGupta(G10X\\Downloads\\Hackathon\\.cursor\\debug.log", "a") as _f:
-        _f.write(json.dumps(_log) + "\n")
-except Exception as _e:
-    with open("c:\\Users\\ManasKumarGupta(G10X\\Downloads\\Hackathon\\.cursor\\debug.log", "a") as _f:
-        _f.write(json.dumps({"message": "version log failed", "data": {"err": str(_e)}}) + "\n")
-# #endregion
 
 class OpenAIService:
     """OpenAI service for AI-powered features"""
