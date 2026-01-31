@@ -31,7 +31,8 @@ import StoreIcon from "@mui/icons-material/Store";
 import PaymentIcon from "@mui/icons-material/Payment";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import { useAuth } from "@/context/AuthContext";
-import { cart as cartApi, orders as ordersApi, stores, addresses as addressesApi } from "@/lib/api";
+import { cart as cartApi, orders as ordersApi, stores, addresses as addressesApi, watchlist } from "@/lib/api";
+import WatchlistComboCard from "@/components/watchlist/WatchlistComboCard";
 
 export default function Checkout() {
   const router = useRouter();
@@ -58,6 +59,7 @@ export default function Checkout() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [comboSuggestions, setComboSuggestions] = useState([]);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -66,14 +68,16 @@ export default function Checkout() {
     }
     (async () => {
       try {
-        const [cartRes, storesRes, addressesRes] = await Promise.all([
+        const [cartRes, storesRes, addressesRes, comboRes] = await Promise.all([
           cartApi.get(),
           stores.pickup().catch(() => ({ stores: [] })),
           addressesApi.list().catch(() => ({ addresses: [] })),
+          watchlist.comboSuggestionsCheckout().catch(() => ({ suggestions: [] })),
         ]);
         setCart(cartRes);
         setPickupStores(storesRes?.stores || []);
         setSavedAddresses(addressesRes?.addresses || []);
+        setComboSuggestions(comboRes?.suggestions || []);
         if (storesRes?.stores?.[0]?._id) setStoreId(storesRes.stores[0]._id);
         // Set default address if available
         const defaultAddr = addressesRes?.addresses?.find((a) => a.is_default);
@@ -522,6 +526,45 @@ export default function Checkout() {
               </FormControl>
             )}
               </>
+            )}
+            {comboSuggestions.length > 0 && (
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 1.5,
+                  bgcolor: "grey.50",
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+                  Complete your Watchlist combos and save more
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                  {comboSuggestions.slice(0, 2).map((suggestion, index) => (
+                    <Box
+                      key={`${suggestion.watchlist_product?._id}-${index}`}
+                      sx={{
+                        transform: "scale(0.95)",
+                        opacity: 0.9,
+                      }}
+                    >
+                      <WatchlistComboCard
+                        suggestion={suggestion}
+                        onAddToCart={async () => {
+                          const cartRes = await cartApi.get();
+                          setCart(cartRes);
+                          try {
+                            const comboRes = await watchlist.comboSuggestionsCheckout();
+                            setComboSuggestions(comboRes?.suggestions || []);
+                          } catch {}
+                        }}
+                      />
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
             )}
             <Button
               fullWidth

@@ -8,7 +8,7 @@ from app.database import connect_db, close_db
 from jobs.cart_migration_job import start_scheduler
 
 # Import routes
-from app.routes import auth, products, cart, recommendations, gamification, orders, stores, bundles, payments, chat, offers
+from app.routes import auth, products, cart, recommendations, gamification, orders, stores, bundles, payments, chat, offers, watchlist
 
 # ============= LIFESPAN EVENTS =============
 
@@ -64,6 +64,7 @@ app.include_router(bundles.router)
 app.include_router(payments.router)
 app.include_router(chat.router)
 app.include_router(offers.router)
+app.include_router(watchlist.router)
 
 # ============= HEALTH CHECK =============
 
@@ -84,7 +85,8 @@ async def root():
             "bundles": "/api/bundles",
             "payments": "/api/payments",
             "chat": "/api/chat",
-            "offers": "/api/offers"
+            "offers": "/api/offers",
+            "watchlist": "/api/watchlist"
         }
     }
 

@@ -15,19 +15,25 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import { useAuth } from "@/context/AuthContext";
-import { cart as cartApi, recommendations } from "@/lib/api";
+import { useSnackbar } from "@/context/SnackbarContext";
+import { cart as cartApi, recommendations, watchlist } from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
+import WatchlistComboCard from "@/components/watchlist/WatchlistComboCard";
+import Tooltip from "@mui/material/Tooltip";
 
 export default function Cart() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
+  const { showSnackbar } = useSnackbar();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   const [recommended, setRecommended] = useState([]);
+  const [comboSuggestions, setComboSuggestions] = useState([]);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -40,13 +46,18 @@ export default function Cart() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await recommendations.list(6);
-        setRecommended(res?.products || []);
+        const [recRes, comboRes] = await Promise.all([
+          recommendations.list(6).catch(() => ({ products: [] })),
+          isLoggedIn ? watchlist.comboSuggestionsCart().catch(() => ({ suggestions: [] })) : Promise.resolve({ suggestions: [] }),
+        ]);
+        setRecommended(recRes?.products || []);
+        setComboSuggestions(comboRes?.suggestions || []);
       } catch {
         setRecommended([]);
+        setComboSuggestions([]);
       }
     })();
-  }, []);
+  }, [isLoggedIn, data]);
 
   const fetchCart = async () => {
     try {
@@ -114,6 +125,24 @@ export default function Cart() {
       await fetchCart();
     } catch (e) {
       if (e.message?.includes("401")) router.replace("/login");
+    }
+  };
+
+  const handleMoveToWatchlist = async (productId) => {
+    setUpdating(productId);
+    try {
+      await watchlist.moveFromCart(productId);
+      showSnackbar("Moved to Watchlist - we'll notify you about price drops", "success");
+      await fetchCart();
+      // Refresh combo suggestions
+      try {
+        const comboRes = await watchlist.comboSuggestionsCart();
+        setComboSuggestions(comboRes?.suggestions || []);
+      } catch {}
+    } catch (e) {
+      showSnackbar(e.message || "Failed to move to watchlist", "error");
+    } finally {
+      setUpdating(null);
     }
   };
 
@@ -254,7 +283,17 @@ export default function Cart() {
                       >
                         <AddIcon fontSize="small" />
                       </IconButton>
-                      <IconButton size="small" disabled={busy} onClick={() => handleRemove(p._id)} sx={{ ml: 1 }}>
+                      <Tooltip title="Move to Watchlist - we'll notify you about price drops">
+                        <IconButton
+                          size="small"
+                          disabled={busy}
+                          onClick={() => handleMoveToWatchlist(p._id)}
+                          sx={{ ml: 1 }}
+                        >
+                          <BookmarkBorderIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <IconButton size="small" disabled={busy} onClick={() => handleRemove(p._id)} sx={{ ml: 0.5 }}>
                         <DeleteOutlineIcon fontSize="small" />
                       </IconButton>
                     </Box>
@@ -322,6 +361,28 @@ export default function Cart() {
             >
               Checkout
             </Button>
+            {comboSuggestions.length > 0 && (
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
+                  Complete your Watchlist combos and save more
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {comboSuggestions.slice(0, 3).map((suggestion, index) => (
+                    <WatchlistComboCard
+                      key={`${suggestion.watchlist_product?._id}-${index}`}
+                      suggestion={suggestion}
+                      onAddToCart={async () => {
+                        await fetchCart();
+                        try {
+                          const comboRes = await watchlist.comboSuggestionsCart();
+                          setComboSuggestions(comboRes?.suggestions || []);
+                        } catch {}
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
             {recommended.length > 0 && (
               <>
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 3, mb: 1, display: "block" }}>

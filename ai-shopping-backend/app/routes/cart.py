@@ -79,11 +79,17 @@ async def get_cart(current_user = Depends(get_current_user)):
     cart_items = user.get("cart", [])
     cart_coupon = user.get("cart_coupon")
     
+    # Filter out migrated items (shouldn't be in cart, but filter just in case)
+    active_cart_items = [
+        item for item in cart_items 
+        if not item.get("migrated_to_wishlist", False)
+    ]
+    
     # Get product details for each cart item
     cart_with_products = []
     total_amount = 0
     
-    for item in cart_items:
+    for item in active_cart_items:
         product = await db.products.find_one({"_id": item["product_id"]})
         
         if product:
@@ -93,8 +99,7 @@ async def get_cart(current_user = Depends(get_current_user)):
                 "product": product,
                 "quantity": item["quantity"],
                 "added_at": item["added_at"],
-                "days_in_cart": days_in_cart,
-                "migrated_to_wishlist": item.get("migrated_to_wishlist", False)
+                "days_in_cart": days_in_cart
             })
             
             total_amount += float(product.get("price", 0)) * item["quantity"]

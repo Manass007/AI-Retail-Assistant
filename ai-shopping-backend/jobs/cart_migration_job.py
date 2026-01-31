@@ -35,21 +35,33 @@ async def migrate_old_cart_items():
         
         for item in cart:
             if item["added_at"] <= fifteen_days_ago and not item.get("migrated_to_wishlist", False):
-                # Add to wishlist
-                wishlist.append({
+                # Get product details for metadata
+                product = await db.products.find_one({"_id": item["product_id"]})
+                
+                # Add to watchlist with enhanced metadata
+                watchlist_item = {
                     "product_id": item["product_id"],
                     "migrated_from_cart": True,
+                    "manual_move": False,
                     "original_cart_date": item["added_at"],
                     "added_at": datetime.utcnow()
-                })
+                }
+                
+                # Add product metadata for combo matching
+                if product:
+                    watchlist_item["category"] = product.get("category")
+                    watchlist_item["price"] = product.get("price", 0)
+                    watchlist_item["brand"] = product.get("brand")
+                
+                wishlist.append(watchlist_item)
                 
                 items_migrated.append(item["product_id"])
                 migrated_count += 1
                 
-                # Mark as migrated in cart
-                item["migrated_to_wishlist"] = True
-            
-            updated_cart.append(item)
+                # Don't add to updated_cart - remove from cart completely
+            else:
+                # Keep non-migrated items in cart
+                updated_cart.append(item)
         
         if items_migrated:
             # Update user
