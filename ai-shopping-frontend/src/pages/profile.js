@@ -45,9 +45,12 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
+import StarsIcon from "@mui/icons-material/Stars";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { useAuth } from "@/context/AuthContext";
 import { useSnackbar } from "@/context/SnackbarContext";
-import { orders as ordersApi, auth as authApi, cart as cartApi, offers as offersApi, addresses as addressesApi, watchlist as watchlistApi } from "@/lib/api";
+import { orders as ordersApi, auth as authApi, cart as cartApi, offers as offersApi, addresses as addressesApi, watchlist as watchlistApi, gamification as gamificationApi } from "@/lib/api";
 
 const PREF_CATEGORIES = ["Electronics", "Fashion", "Home", "Sports", "Office", "Dairy", "Groceries", "Staples", "Personal Care"];
 const BUDGET_OPTIONS = [{ value: "low", label: "Budget-friendly" }, { value: "mid", label: "Moderate" }, { value: "high", label: "Premium" }];
@@ -88,6 +91,8 @@ export default function Profile() {
   const [cartWatchlistTab, setCartWatchlistTab] = useState(0);
   const [watchlistItems, setWatchlistItems] = useState([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
+  const [pointsInfo, setPointsInfo] = useState(null);
+  const [pointsLoading, setPointsLoading] = useState(false);
   const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
@@ -178,6 +183,21 @@ export default function Profile() {
         setAddresses([]);
       } finally {
         setAddressesLoading(false);
+      }
+    })();
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    (async () => {
+      setPointsLoading(true);
+      try {
+        const data = await gamificationApi.getPointsInfo();
+        setPointsInfo(data);
+      } catch {
+        setPointsInfo(null);
+      } finally {
+        setPointsLoading(false);
       }
     })();
   }, [isLoggedIn]);
@@ -492,6 +512,113 @@ export default function Profile() {
               </Box>
             )}
           </Box>
+        </Paper>
+
+        <Typography variant="subtitle2" sx={{ mb: 1, display: "block" }}>
+          Points & Rewards
+        </Typography>
+        <Paper sx={{ mb: 2, borderRadius: 2, overflow: "hidden" }}>
+          {pointsLoading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : pointsInfo ? (
+            <Box sx={{ p: 2 }}>
+              {/* Total Points */}
+              <Box sx={{ mb: 3, textAlign: "center", bgcolor: "primary.light", borderRadius: 2, p: 2 }}>
+                <Typography variant="h4" fontWeight={700} color="primary.contrastText">
+                  {pointsInfo.total_points} Points
+                </Typography>
+                <Typography variant="body2" color="primary.contrastText" sx={{ opacity: 0.9 }}>
+                  Worth ${pointsInfo.points_value_usd.toFixed(2)} (20 points = $0.90)
+                </Typography>
+              </Box>
+
+              {/* Daily Progress */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <TrendingUpIcon fontSize="small" />
+                  Daily Progress
+                </Typography>
+                <Box sx={{ bgcolor: "grey.100", borderRadius: 1, p: 1.5 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                    <Typography variant="body2">Prompts: {pointsInfo.daily_prompts_completed}/4</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {pointsInfo.daily_prompts_remaining} remaining
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="body2">Points: {pointsInfo.daily_points_earned}/12</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {pointsInfo.daily_points_remaining} remaining
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mt: 1, width: "100%", height: 8, bgcolor: "grey.300", borderRadius: 1, overflow: "hidden" }}>
+                    <Box
+                      sx={{
+                        width: `${(pointsInfo.daily_points_earned / 12) * 100}%`,
+                        height: "100%",
+                        bgcolor: "primary.main",
+                        transition: "width 0.3s",
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Streak Information */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1, display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <EmojiEventsIcon fontSize="small" />
+                  Streak & Tier
+                </Typography>
+                <Box sx={{ bgcolor: "grey.100", borderRadius: 1, p: 1.5 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                    <Typography variant="body2">
+                      Current Tier: <strong style={{ textTransform: "capitalize" }}>{pointsInfo.streak_tier || "None"}</strong>
+                    </Typography>
+                    {pointsInfo.streak_tier !== "none" && (
+                      <StarsIcon
+                        sx={{
+                          color: pointsInfo.streak_tier === "gold" ? "gold" : pointsInfo.streak_tier === "silver" ? "grey.600" : "#cd7f32",
+                          fontSize: 20,
+                        }}
+                      />
+                    )}
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    Streak: {pointsInfo.streak_days} days
+                  </Typography>
+                  {pointsInfo.next_tier && (
+                    <Typography variant="caption" color="text.secondary">
+                      {pointsInfo.days_to_next_tier} days until {pointsInfo.next_tier} tier
+                    </Typography>
+                  )}
+                  {pointsInfo.streak_reset_date && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                      Resets: {new Date(pointsInfo.streak_reset_date).toLocaleDateString()}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+
+              {/* Info Box */}
+              <Box sx={{ mt: 2, p: 1.5, bgcolor: "info.light", borderRadius: 1 }}>
+                <Typography variant="caption" color="info.contrastText">
+                  <strong>How to earn points:</strong>
+                  <br />• 3 points per chat prompt (max 12 points/day)
+                  <br />• 12 bonus points when you buy suggested products
+                  <br />• Complete 30-day streak to unlock tiers (Bronze → Silver → Gold)
+                </Typography>
+              </Box>
+            </Box>
+          ) : (
+            <Box sx={{ p: 2, textAlign: "center" }}>
+              <Typography variant="body2" color="text.secondary">
+                Unable to load points information
+              </Typography>
+            </Box>
+          )}
         </Paper>
 
         <List sx={{ bgcolor: "background.paper", borderRadius: 2, overflow: "hidden", mb: 2 }}>

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from app.database import get_db
 from app.middleware.auth import get_current_user
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import random
 
 router = APIRouter(prefix="/api/gamification", tags=["Gamification"])
@@ -30,6 +30,20 @@ class DailyCheckInClaimResponse(BaseModel):
     reward: dict
     message: str
     streak: int
+
+class PointsInfoResponse(BaseModel):
+    success: bool
+    total_points: int
+    points_value_usd: float  # 20 points = $0.9
+    daily_prompts_completed: int
+    daily_prompts_remaining: int
+    daily_points_earned: int
+    daily_points_remaining: int
+    streak_days: int
+    streak_tier: str  # "none" | "bronze" | "silver" | "gold"
+    streak_reset_date: datetime = None
+    next_tier: str = None
+    days_to_next_tier: int = None
 
 # ============= ROUTES =============
 
@@ -396,6 +410,52 @@ async def claim_daily_checkin(current_user = Depends(get_current_user)):
             rewards_claimed.append(now)
             update_data["checkin_rewards_claimed"] = rewards_claimed
     
+    # Update points system streak
+    streak_days = user.get("streak_days", 0)
+    streak_tier = user.get("streak_tier", "none")
+    streak_start_date = user.get("streak_start_date")
+    streak_reset_date = user.get("streak_reset_date")
+    
+    # Check if it's a new day for streak
+    last_checkin_for_streak = user.get("last_checkin_date")
+    if last_checkin_for_streak:
+        last_checkin_date_obj = last_checkin_for_streak.date() if isinstance(last_checkin_for_streak, datetime) else last_checkin_for_streak
+        if last_checkin_date_obj < today_date:
+            # New day, increment streak
+            streak_days += 1
+    else:
+        # First check-in
+        streak_days = 1
+        streak_start_date = now
+    
+    # Check if streak reset date passed
+    if streak_reset_date:
+        reset_date_obj = streak_reset_date.date() if isinstance(streak_reset_date, datetime) else streak_reset_date
+        if reset_date_obj < today_date:
+            # Reset period passed, start new period
+            streak_days = 1
+            streak_tier = "none"
+            streak_start_date = now
+            streak_reset_date = now + timedelta(days=90)
+    else:
+        # Set initial reset date (3 months from now)
+        streak_reset_date = now + timedelta(days=90)
+    
+    # Update tier based on streak (30 days per tier)
+    if streak_days >= 90:
+        streak_tier = "gold"
+    elif streak_days >= 60:
+        streak_tier = "silver"
+    elif streak_days >= 30:
+        streak_tier = "bronze"
+    else:
+        streak_tier = "none"
+    
+    update_data["streak_days"] = streak_days
+    update_data["streak_tier"] = streak_tier
+    update_data["streak_start_date"] = streak_start_date
+    update_data["streak_reset_date"] = streak_reset_date
+    
     await db.users.update_one(
         {"_id": current_user["_id"]},
         {"$set": update_data}
@@ -415,4 +475,180 @@ async def claim_daily_checkin(current_user = Depends(get_current_user)):
         "reward": reward_data,
         "message": message,
         "streak": current_streak
+    }
+
+# ============= POINTS SYSTEM ROUTES =============
+
+@router.get("/points/info")
+async def get_points_info(current_user = Depends(get_current_user)):
+    """Get user's points information, daily progress, and streak status"""
+    db = get_db()
+    user = await db.users.find_one({"_id": current_user["_id"]})
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    now = datetime.utcnow()
+    today = now.date()
+    
+    # Get points data
+    total_points = user.get("points", 0)
+    last_prompt_date = user.get("last_prompt_date")
+    daily_prompt_count = user.get("daily_prompt_count", 0)
+    
+    # Reset daily count if it's a new day
+    if last_prompt_date:
+        last_prompt_date_obj = last_prompt_date.date() if isinstance(last_prompt_date, datetime) else last_prompt_date
+        if last_prompt_date_obj < today:
+            daily_prompt_count = 0
+            # Reset daily prompt count in DB
+            await db.users.update_one(
+                {"_id": current_user["_id"]},
+                {"$set": {"daily_prompt_count": 0, "suggested_products_today": []}}
+            )
+    
+    # Calculate daily progress
+    daily_prompts_completed = daily_prompt_count
+    daily_prompts_remaining = max(0, 4 - daily_prompt_count)
+    daily_points_earned = daily_prompt_count * 3
+    daily_points_remaining = daily_prompts_remaining * 3
+    
+    # Points value: 20 points = $0.9, so 1 point = $0.045
+    points_value_usd = round(total_points * 0.045, 2)
+    
+    # Streak system: 30 days = bronze → silver → gold, reset every 3 months
+    streak_days = user.get("streak_days", 0)
+    streak_tier = user.get("streak_tier", "none")
+    streak_start_date = user.get("streak_start_date")
+    streak_reset_date = user.get("streak_reset_date")
+    
+    # Check if streak needs reset (every 3 months)
+    if streak_reset_date:
+        if isinstance(streak_reset_date, datetime):
+            reset_date = streak_reset_date.date()
+        else:
+            reset_date = streak_reset_date
+        if reset_date < today:
+            # Reset streak
+            streak_days = 0
+            streak_tier = "none"
+            await db.users.update_one(
+                {"_id": current_user["_id"]},
+                {"$set": {
+                    "streak_days": 0,
+                    "streak_tier": "none",
+                    "streak_start_date": None,
+                    "streak_reset_date": None
+                }}
+            )
+    else:
+        # Set initial reset date if not set (3 months from now)
+        if streak_days > 0:
+            new_reset_date = now + timedelta(days=90)
+            await db.users.update_one(
+                {"_id": current_user["_id"]},
+                {"$set": {"streak_reset_date": new_reset_date}}
+            )
+            streak_reset_date = new_reset_date
+    
+    # Determine next tier
+    next_tier = None
+    days_to_next_tier = None
+    if streak_tier == "none":
+        next_tier = "bronze"
+        days_to_next_tier = max(0, 30 - streak_days)
+    elif streak_tier == "bronze":
+        next_tier = "silver"
+        days_to_next_tier = max(0, 30 - (streak_days % 30))
+    elif streak_tier == "silver":
+        next_tier = "gold"
+        days_to_next_tier = max(0, 30 - (streak_days % 30))
+    else:  # gold
+        next_tier = None
+        days_to_next_tier = None
+    
+    return {
+        "success": True,
+        "total_points": total_points,
+        "points_value_usd": points_value_usd,
+        "daily_prompts_completed": daily_prompts_completed,
+        "daily_prompts_remaining": daily_prompts_remaining,
+        "daily_points_earned": daily_points_earned,
+        "daily_points_remaining": daily_points_remaining,
+        "streak_days": streak_days,
+        "streak_tier": streak_tier,
+        "streak_reset_date": streak_reset_date,
+        "next_tier": next_tier,
+        "days_to_next_tier": days_to_next_tier,
+    }
+
+@router.post("/points/update-streak")
+async def update_streak(current_user = Depends(get_current_user)):
+    """Update streak when user completes daily check-in (called from daily check-in)"""
+    db = get_db()
+    user = await db.users.find_one({"_id": current_user["_id"]})
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    now = datetime.utcnow()
+    today = now.date()
+    
+    streak_days = user.get("streak_days", 0)
+    streak_tier = user.get("streak_tier", "none")
+    streak_start_date = user.get("streak_start_date")
+    last_checkin_date = user.get("last_checkin_date")
+    
+    # Check if user checked in today
+    if last_checkin_date:
+        last_checkin_date_obj = last_checkin_date.date() if isinstance(last_checkin_date, datetime) else last_checkin_date
+        if last_checkin_date_obj >= today:
+            # Already checked in today, increment streak
+            streak_days += 1
+        else:
+            # New day, increment streak
+            streak_days += 1
+    else:
+        # First check-in
+        streak_days = 1
+        streak_start_date = now
+    
+    # Update tier based on streak (30 days per tier)
+    if streak_days >= 90:
+        streak_tier = "gold"
+    elif streak_days >= 60:
+        streak_tier = "silver"
+    elif streak_days >= 30:
+        streak_tier = "bronze"
+    else:
+        streak_tier = "none"
+    
+    # Set reset date (3 months from start or from last reset)
+    streak_reset_date = user.get("streak_reset_date")
+    if not streak_reset_date:
+        streak_reset_date = now + timedelta(days=90)
+    elif isinstance(streak_reset_date, datetime):
+        reset_date_obj = streak_reset_date.date()
+        if reset_date_obj < today:
+            # Reset period passed, start new period
+            streak_reset_date = now + timedelta(days=90)
+            streak_days = 1
+            streak_tier = "none"
+            streak_start_date = now
+    
+    await db.users.update_one(
+        {"_id": current_user["_id"]},
+        {"$set": {
+            "streak_days": streak_days,
+            "streak_tier": streak_tier,
+            "streak_start_date": streak_start_date,
+            "streak_reset_date": streak_reset_date
+        }}
+    )
+    
+    return {
+        "success": True,
+        "streak_days": streak_days,
+        "streak_tier": streak_tier,
+        "message": f"Streak updated! You're at {streak_days} days ({streak_tier} tier)"
     }

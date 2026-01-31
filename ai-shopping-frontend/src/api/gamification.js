@@ -24,4 +24,16 @@ export const gamificationAPI = {
     const response = await api.get('/gamification/can-spin');
     return response.data;
   },
+
+  // Get points information
+  getPointsInfo: async () => {
+    const response = await api.get('/gamification/points/info');
+    return response.data;
+  },
+
+  // Update streak (called from daily check-in)
+  updateStreak: async () => {
+    const response = await api.post('/gamification/points/update-streak');
+    return response.data;
+  },
 };

@@ -211,6 +211,26 @@ async def create_order(
         "created_at": datetime.utcnow(),
     }
     await db.orders.insert_one(order)
+    
+    # Points system: Award 12 points if user buys products suggested in prompts today
+    suggested_products_today = user.get("suggested_products_today", [])
+    ordered_product_ids = [item.get("product_id") for item in items]
+    bought_suggested = any(pid in suggested_products_today for pid in ordered_product_ids)
+    
+    points_awarded = 0
+    if bought_suggested:
+        points_awarded = 12
+        current_points = user.get("points", 0)
+        await db.users.update_one(
+            {"_id": current_user["_id"]},
+            {"$set": {"points": current_points + points_awarded}}
+        )
+        # Clear suggested products after awarding bonus
+        await db.users.update_one(
+            {"_id": current_user["_id"]},
+            {"$set": {"suggested_products_today": []}}
+        )
+    
     await db.users.update_one(
         {"_id": current_user["_id"]},
         {"$set": {"cart": []}, "$unset": {"cart_coupon": 1}},
@@ -228,4 +248,5 @@ async def create_order(
         "payment_method": request.payment_method,
         "payment_status": order["payment_status"],
         "message": "Pay online to complete order." if request.payment_method == "online" else "Pay at store when you pick up.",
+        "points_awarded": points_awarded,
     }
