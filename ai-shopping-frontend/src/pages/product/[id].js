@@ -100,8 +100,42 @@ export default function ProductDetail() {
               objectFit: "cover",
             }}
           />
+          <Box
+            onClick={() => router.push("/")}
+            sx={{
+              position: "absolute",
+              top: 8,
+              left: 8,
+              width: { xs: 48, sm: 56 },
+              height: { xs: 48, sm: 56 },
+              borderRadius: 3,
+              bgcolor: "rgba(255,255,255,0.95)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              p: 1,
+              cursor: "pointer",
+              transition: "transform 0.2s, boxShadow 0.2s",
+              "&:hover": {
+                transform: "scale(1.05)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              },
+            }}
+          >
+            <Box
+              component="img"
+              src="/aiva_logo1.png"
+              alt="AIVA Logo"
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+              }}
+            />
+          </Box>
           <IconButton
-            sx={{ position: "absolute", top: 8, left: 8, bgcolor: "rgba(255,255,255,0.9)" }}
+            sx={{ position: "absolute", top: 8, right: 8, bgcolor: "rgba(255,255,255,0.9)" }}
             onClick={() => router.back()}
           >
             <ArrowBackIcon />

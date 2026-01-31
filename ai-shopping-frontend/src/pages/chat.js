@@ -111,9 +111,50 @@ export default function Chat() {
         <link rel="icon" href="/aiva_logo1.png" />
       </Head>
       <Box sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", px: 2 }}>
-        <Typography variant="h1" sx={{ fontSize: "1.25rem", py: 2 }}>
-          Chat with assistant
-        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            py: 2,
+          }}
+        >
+          <Box
+            onClick={() => router.push("/")}
+            sx={{
+              width: { xs: 48, sm: 56 },
+              height: { xs: 48, sm: 56 },
+              borderRadius: 3,
+              bgcolor: "background.paper",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              flexShrink: 0,
+              p: 1,
+              cursor: "pointer",
+              transition: "transform 0.2s, boxShadow 0.2s",
+              "&:hover": {
+                transform: "scale(1.05)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              },
+            }}
+          >
+            <Box
+              component="img"
+              src="/aiva_logo1.png"
+              alt="AIVA Logo"
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+              }}
+            />
+          </Box>
+          <Typography variant="h1" sx={{ fontSize: "1.25rem" }}>
+            Chat with assistant
+          </Typography>
+        </Box>
 
         <Box sx={{ flex: 1, overflowY: "auto", mb: 2 }}>
           {messages.length === 0 && (

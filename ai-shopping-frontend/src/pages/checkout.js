@@ -299,15 +299,37 @@ export default function Checkout() {
                 <ArrowBackIcon />
               </IconButton>
               <Box
-                component="img"
-                src="/aiva_logo1.png"
-                alt="AIVA Logo"
+                onClick={() => router.push("/")}
                 sx={{
-                  width: { xs: 40, sm: 50 },
-                  height: "auto",
-                  borderRadius: 1,
+                  width: { xs: 56, sm: 64 },
+                  height: { xs: 56, sm: 64 },
+                  borderRadius: 3,
+                  bgcolor: "background.paper",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  flexShrink: 0,
+                  p: 1,
+                  cursor: "pointer",
+                  transition: "transform 0.2s, boxShadow 0.2s",
+                  "&:hover": {
+                    transform: "scale(1.05)",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                  },
                 }}
-              />
+              >
+                <Box
+                  component="img"
+                  src="/aiva_logo1.png"
+                  alt="AIVA Logo"
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                  }}
+                />
+              </Box>
               <Typography variant="h1" sx={{ fontSize: { xs: "1.75rem", sm: "2rem" }, fontWeight: 700 }}>
                 Checkout
               </Typography>
