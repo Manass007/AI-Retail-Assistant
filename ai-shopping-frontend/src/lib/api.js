@@ -113,5 +113,12 @@ export const offers = {
   list: () => api("GET", "/api/offers"),
 };
 
+export const gamification = {
+  dailyCheckin: {
+    status: () => api("GET", "/api/gamification/daily-checkin/status"),
+    claim: () => api("POST", "/api/gamification/daily-checkin"),
+  },
+};
+
 export { getToken };
 export default api;

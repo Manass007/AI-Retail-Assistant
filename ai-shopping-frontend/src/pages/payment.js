@@ -49,11 +49,11 @@ export default function Payment() {
   const openRazorpayCheckout = () => {
     if (!window.Razorpay || !keyId || !razorpayOrderId || !order_id) return;
     setPaying(true);
-    const amount = Math.round(parseFloat(total) * 100); // paise for INR
+    const amount = Math.round(parseFloat(total) * 100); // cents for USD
     const options = {
       key: keyId,
       amount,
-      currency: "INR",
+      currency: "USD",
       name: "AI Shopping Assistant",
       description: "Order " + order_id,
       order_id: razorpayOrderId,
@@ -141,7 +141,7 @@ export default function Payment() {
         ) : (
           <>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Order total: ₹{Number(total).toFixed(2)}
+              Order total: ${Number(total).toFixed(2)}
             </Typography>
             <Button
               variant="contained"

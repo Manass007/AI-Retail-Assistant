@@ -337,9 +337,7 @@ export default function Profile() {
             <ListItemText primary="Cart" />
           </ListItem>
           <Divider />
-          <ListItem button onClick={() => router.push("/checkout")}>
-            <ListItemText primary="Checkout" />
-          </ListItem>
+          
           <Divider />
           <ListItem button onClick={() => setCouponsDialogOpen(true)}>
             <LocalOfferIcon sx={{ mr: 2, color: "text.secondary" }} />

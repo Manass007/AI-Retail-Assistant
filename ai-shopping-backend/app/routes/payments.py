@@ -52,14 +52,14 @@ async def create_razorpay_order(
         raise HTTPException(status_code=400, detail="Order is not for online payment")
     if order.get("payment_status") == "paid":
         raise HTTPException(status_code=400, detail="Order already paid")
-    amount_paise = int(round(request.amount_usd * 100))
-    if amount_paise < 1:
-        raise HTTPException(status_code=400, detail="Amount must be at least ₹0.01")
+    amount_cents = int(round(request.amount_usd * 100))
+    if amount_cents < 1:
+        raise HTTPException(status_code=400, detail="Amount must be at least $0.01")
     import razorpay
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
     rz_order = client.order.create({
-        "amount": amount_paise,
-        "currency": "INR",
+        "amount": amount_cents,
+        "currency": "USD",
         "receipt": request.order_id,
     })
     await db.orders.update_one(

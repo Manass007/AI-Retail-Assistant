@@ -174,6 +174,25 @@ async def create_order(
         pct = cart_coupon.get("discount_percent", 0)
         discount_amount = round(total * (pct / 100.0), 2)
         coupon_code = cart_coupon.get("code")
+    # Check for monthly gift eligibility
+    monthly_gift_eligible = user.get("monthly_gift_eligible", False)
+    monthly_gift_used = user.get("monthly_gift_used", False)
+    
+    # Add free gift if eligible and not used
+    if monthly_gift_eligible and not monthly_gift_used:
+        gift_product = await db.products.find_one({"_id": "FREE_GIFT_KEYCHAIN"})
+        if gift_product:
+            items.append({
+                "product_id": "FREE_GIFT_KEYCHAIN",
+                "quantity": 1,
+                "price": 0.00
+            })
+            # Mark gift as used
+            await db.users.update_one(
+                {"_id": current_user["_id"]},
+                {"$set": {"monthly_gift_used": True}}
+            )
+    
     total_after_discount = round(total - discount_amount, 2)
     order_id = f"ord_{datetime.utcnow().timestamp()}"
     order = {

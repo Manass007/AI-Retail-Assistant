@@ -8,6 +8,7 @@ import { useSnackbar } from "@/context/SnackbarContext";
 import { useEffect, useState, useCallback } from "react";
 import { products as productsApi, recommendations, offers, cart as cartApi, orders as ordersApi } from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
+import DailyCheckIn from "@/components/DailyCheckIn";
 
 const CATEGORIES = [
   "Electronics",
@@ -176,6 +177,8 @@ export default function Home() {
         <Button fullWidth sx={{ mb: 2 }} onClick={() => router.push("/products")}>
           Browse all products
         </Button>
+
+        {isLoggedIn && <DailyCheckIn />}
 
         {isLoggedIn && (offersList.length > 0 || earnedCoupons.length > 0) && (
           <Box sx={{ mb: 2 }}>
