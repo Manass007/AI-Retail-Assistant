@@ -320,6 +320,11 @@ PERFUME_TRIMMER_PRODUCTS = [
     {"_id": "prod_p2", "name": "Electric Trimmer", "category": "Personal Care", "price": 50.00, "brand": "GroomPro", "image_url": "https://images.unsplash.com/photo-1622286342621-4bd786c2447c", "description": "Cordless electric trimmer", "tags": ["trimmer", "grooming", "personal-care"], "stock_quantity": 45, "is_in_stock": True, "popularity_score": 68.0, "created_at": datetime.utcnow()},
 ]
 
+# Free gift product for monthly check-in reward
+FREE_GIFT_PRODUCT = [
+    {"_id": "FREE_GIFT_KEYCHAIN", "name": "Free Keychain", "category": "Personal Care", "price": 0.00, "brand": "Reward", "image_url": "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d", "description": "Monthly check-in reward - Free keychain with any purchase", "tags": ["gift", "reward", "keychain"], "stock_quantity": 9999, "is_in_stock": True, "popularity_score": 0.0, "created_at": datetime.utcnow()},
+]
+
 PICKUP_STORES = [
     {"_id": "store_1", "name": "QuickPick Downtown", "address": "123 Main St", "city": "Downtown", "pincode": "10001", "is_active": True},
     {"_id": "store_2", "name": "QuickPick Mall", "address": "456 Mall Ave", "city": "Central", "pincode": "10002", "is_active": True},
@@ -389,8 +394,8 @@ async def seed_database():
         print(f"   Deleted {result4.deleted_count} coupons")
         print(f"   Deleted {result5.deleted_count} stock notifications")
         
-        # Insert products (main + grocery + perfume/trimmer)
-        all_products = SAMPLE_PRODUCTS + GROCERY_PRODUCTS + PERFUME_TRIMMER_PRODUCTS
+        # Insert products (main + grocery + perfume/trimmer + free gift)
+        all_products = SAMPLE_PRODUCTS + GROCERY_PRODUCTS + PERFUME_TRIMMER_PRODUCTS + FREE_GIFT_PRODUCT
         print(f"\n📦 Inserting {len(all_products)} products...")
         result = await db.products.insert_many(all_products)
         print(f"✅ Inserted {len(result.inserted_ids)} products")

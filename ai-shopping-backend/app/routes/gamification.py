@@ -14,6 +14,23 @@ class SpinWheelResponse(BaseModel):
     coupon: dict
     message: str
 
+class DailyCheckInStatusResponse(BaseModel):
+    success: bool
+    streak: int
+    can_claim: bool
+    last_checkin_date: datetime = None
+    next_reward_day: int = None
+    next_reward_description: str = None
+    monthly_gift_eligible: bool = False
+    monthly_gift_used: bool = False
+
+class DailyCheckInClaimResponse(BaseModel):
+    success: bool
+    reward_type: str  # "coupon" | "monthly_gift"
+    reward: dict
+    message: str
+    streak: int
+
 # ============= ROUTES =============
 
 @router.post("/spin-wheel")
@@ -151,4 +168,251 @@ async def can_spin(current_user = Depends(get_current_user)):
         "can_spin": False,
         "message": f"Try again in {30 - days_since_spin} days",
         "days_remaining": 30 - days_since_spin
+    }
+
+# ============= DAILY CHECK-IN ROUTES =============
+
+@router.get("/daily-checkin/status")
+async def get_daily_checkin_status(current_user = Depends(get_current_user)):
+    """Get current daily check-in status"""
+    db = get_db()
+    user = await db.users.find_one({"_id": current_user["_id"]})
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    streak = user.get("checkin_streak", 0)
+    last_checkin = user.get("last_checkin_date")
+    monthly_gift_eligible = user.get("monthly_gift_eligible", False)
+    monthly_gift_used = user.get("monthly_gift_used", False)
+    
+    now = datetime.utcnow()
+    can_claim = False
+    
+    # Check if user can claim today
+    if last_checkin:
+        # Normalize datetime to date for comparison
+        if isinstance(last_checkin, datetime):
+            last_checkin_date = last_checkin.date()
+        elif hasattr(last_checkin, 'date'):
+            last_checkin_date = last_checkin.date()
+        else:
+            last_checkin_date = last_checkin
+        today_date = now.date()
+        
+        if isinstance(last_checkin_date, datetime):
+            last_checkin_date = last_checkin_date.date()
+        
+        if last_checkin_date < today_date:
+            # Check if it's consecutive (yesterday)
+            days_diff = (today_date - last_checkin_date).days
+            if days_diff == 1:
+                can_claim = True
+            elif days_diff > 1:
+                # Streak broken, reset
+                streak = 0
+                can_claim = True
+        else:
+            can_claim = False  # Already claimed today
+    else:
+        # Never checked in, can claim
+        can_claim = True
+    
+    # Determine next reward
+    next_reward_day = None
+    next_reward_description = None
+    
+    if streak == 0:
+        next_reward_day = 1
+        next_reward_description = "2% off coupon"
+    elif streak == 1:
+        next_reward_day = 3
+        next_reward_description = "Free delivery coupon"
+    elif streak < 3:
+        next_reward_day = 3
+        next_reward_description = "Free delivery coupon"
+    elif streak < 7:
+        next_reward_day = 7
+        next_reward_description = "5% off coupon"
+    elif streak < 30:
+        next_reward_day = 30
+        next_reward_description = "Free gift (keychain)"
+    else:
+        next_reward_day = None
+        next_reward_description = "All rewards claimed!"
+    
+    return {
+        "success": True,
+        "streak": streak,
+        "can_claim": can_claim,
+        "last_checkin_date": last_checkin,
+        "next_reward_day": next_reward_day,
+        "next_reward_description": next_reward_description,
+        "monthly_gift_eligible": monthly_gift_eligible,
+        "monthly_gift_used": monthly_gift_used
+    }
+
+@router.post("/daily-checkin")
+async def claim_daily_checkin(current_user = Depends(get_current_user)):
+    """Claim daily check-in reward"""
+    db = get_db()
+    user = await db.users.find_one({"_id": current_user["_id"]})
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    now = datetime.utcnow()
+    last_checkin = user.get("last_checkin_date")
+    current_streak = user.get("checkin_streak", 0)
+    rewards_claimed = user.get("checkin_rewards_claimed", [])
+    
+    # Check if already claimed today
+    if last_checkin:
+        # Normalize datetime to date for comparison
+        if isinstance(last_checkin, datetime):
+            last_checkin_date = last_checkin.date()
+        elif hasattr(last_checkin, 'date'):
+            last_checkin_date = last_checkin.date()
+        else:
+            last_checkin_date = last_checkin
+        today_date = now.date()
+        
+        if isinstance(last_checkin_date, datetime):
+            last_checkin_date = last_checkin_date.date()
+        
+        if last_checkin_date >= today_date:
+            raise HTTPException(
+                status_code=400,
+                detail="You have already claimed your reward today. Come back tomorrow!"
+            )
+        
+        # Check if streak is consecutive
+        days_diff = (today_date - last_checkin_date).days
+        if days_diff == 1:
+            # Consecutive day, increment streak
+            current_streak += 1
+        elif days_diff > 1:
+            # Streak broken, reset to 1
+            current_streak = 1
+    else:
+        # First check-in
+        current_streak = 1
+    
+    # Determine reward based on streak (only give reward on milestone days)
+    reward_type = None
+    reward_data = {}
+    message = ""
+    
+    # Only give rewards on milestone days (1, 3, 7, 30)
+    if current_streak in [1, 3, 7, 30]:
+        if current_streak == 1:
+            # Day 1: 2% off coupon
+            code = f"DAILY1-{random.randint(1000, 9999)}"
+            coupon_data = {
+                "user_id": current_user["_id"],
+                "code": code,
+                "discount_percent": 2,
+                "created_at": now,
+                "expires_at": now + timedelta(days=30),
+                "used": False
+            }
+            await db.coupons.insert_one(coupon_data)
+            reward_type = "coupon"
+            reward_data = {
+                "code": code,
+                "discount_percent": 2,
+                "label": "2% OFF",
+                "expires_at": coupon_data["expires_at"]
+            }
+            message = "Congratulations! You earned a 2% off coupon!"
+            
+        elif current_streak == 3:
+            # Day 3: Free delivery coupon
+            code = f"FREEDEL-{random.randint(1000, 9999)}"
+            coupon_data = {
+                "user_id": current_user["_id"],
+                "code": code,
+                "discount_percent": 0,
+                "free_delivery": True,
+                "created_at": now,
+                "expires_at": now + timedelta(days=30),
+                "used": False
+            }
+            await db.coupons.insert_one(coupon_data)
+            reward_type = "coupon"
+            reward_data = {
+                "code": code,
+                "free_delivery": True,
+                "label": "Free Delivery",
+                "expires_at": coupon_data["expires_at"]
+            }
+            message = "Congratulations! You earned a free delivery coupon!"
+            
+        elif current_streak == 7:
+            # Day 7: 5% off coupon
+            code = f"DAILY7-{random.randint(1000, 9999)}"
+            coupon_data = {
+                "user_id": current_user["_id"],
+                "code": code,
+                "discount_percent": 5,
+                "created_at": now,
+                "expires_at": now + timedelta(days=30),
+                "used": False
+            }
+            await db.coupons.insert_one(coupon_data)
+            reward_type = "coupon"
+            reward_data = {
+                "code": code,
+                "discount_percent": 5,
+                "label": "5% OFF",
+                "expires_at": coupon_data["expires_at"]
+            }
+            message = "Congratulations! You earned a 5% off coupon!"
+            
+        elif current_streak == 30:
+            # Day 30: Free gift
+            await db.users.update_one(
+                {"_id": current_user["_id"]},
+                {"$set": {"monthly_gift_eligible": True, "monthly_gift_used": False}}
+            )
+            reward_type = "monthly_gift"
+            reward_data = {
+                "gift_name": "Free Keychain",
+                "description": "Get a free keychain with your next purchase!"
+            }
+            message = "Amazing! You've logged in for 30 days! You'll receive a free keychain with your next purchase!"
+    
+    # Update user's check-in data
+    update_data = {
+        "last_checkin_date": now,
+        "checkin_streak": current_streak
+    }
+    
+    # Add to rewards claimed if we gave a reward
+    if reward_type:
+        if "checkin_rewards_claimed" not in user or not isinstance(user.get("checkin_rewards_claimed"), list):
+            update_data["checkin_rewards_claimed"] = [now]
+        else:
+            rewards_claimed.append(now)
+            update_data["checkin_rewards_claimed"] = rewards_claimed
+    
+    await db.users.update_one(
+        {"_id": current_user["_id"]},
+        {"$set": update_data}
+    )
+    
+    # If no reward this time (not a milestone day), still update streak
+    if not reward_type:
+        message = f"Great! Day {current_streak} check-in complete. Keep it up!"
+        reward_data = {
+            "streak": current_streak,
+            "next_milestone": 1 if current_streak < 1 else (3 if current_streak < 3 else (7 if current_streak < 7 else 30))
+        }
+    
+    return {
+        "success": True,
+        "reward_type": reward_type or "streak_update",
+        "reward": reward_data,
+        "message": message,
+        "streak": current_streak
     }

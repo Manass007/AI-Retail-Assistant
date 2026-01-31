@@ -18,6 +18,7 @@ import {
   DialogActions,
   TextField,
   FormControl,
+  FormControlLabel,
   InputLabel,
   Select,
   MenuItem,
@@ -33,8 +34,14 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CakeIcon from "@mui/icons-material/Cake";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
+import HomeIcon from "@mui/icons-material/Home";
+import WorkIcon from "@mui/icons-material/Work";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { useAuth } from "@/context/AuthContext";
-import { orders as ordersApi, auth as authApi, cart as cartApi, offers as offersApi } from "@/lib/api";
+import { orders as ordersApi, auth as authApi, cart as cartApi, offers as offersApi, addresses as addressesApi } from "@/lib/api";
 
 const PREF_CATEGORIES = ["Electronics", "Fashion", "Home", "Sports", "Office", "Dairy", "Groceries", "Staples", "Personal Care"];
 const BUDGET_OPTIONS = [{ value: "low", label: "Budget-friendly" }, { value: "mid", label: "Moderate" }, { value: "high", label: "Premium" }];
@@ -59,6 +66,19 @@ export default function Profile() {
   const [earnedCoupon, setEarnedCoupon] = useState(null);
   const [couponsDialogOpen, setCouponsDialogOpen] = useState(false);
   const [earnedCouponsList, setEarnedCouponsList] = useState([]);
+  const [addresses, setAddresses] = useState([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  const [addressDialogOpen, setAddressDialogOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [addressForm, setAddressForm] = useState({
+    type: "home",
+    street: "",
+    city: "",
+    state: "",
+    pincode: "",
+    country: "USA",
+    is_default: false,
+  });
 
   useEffect(() => {
     if (!isLoggedIn) router.replace("/login");
@@ -122,6 +142,21 @@ export default function Profile() {
     })();
   }, [isLoggedIn, couponsDialogOpen]);
 
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    (async () => {
+      setAddressesLoading(true);
+      try {
+        const data = await addressesApi.list();
+        setAddresses(data?.addresses || []);
+      } catch {
+        setAddresses([]);
+      } finally {
+        setAddressesLoading(false);
+      }
+    })();
+  }, [isLoggedIn]);
+
   const handleLogout = () => {
     logout();
     router.replace("/login");
@@ -179,6 +214,92 @@ export default function Profile() {
     }
   };
 
+  const handleOpenAddressDialog = (address = null) => {
+    if (address) {
+      setEditingAddress(address);
+      setAddressForm({
+        type: address.type || "home",
+        street: address.street || "",
+        city: address.city || "",
+        state: address.state || "",
+        pincode: address.pincode || "",
+        country: address.country || "USA",
+        is_default: address.is_default || false,
+      });
+    } else {
+      setEditingAddress(null);
+      setAddressForm({
+        type: "home",
+        street: "",
+        city: "",
+        state: "",
+        pincode: "",
+        country: "USA",
+        is_default: addresses.length === 0,
+      });
+    }
+    setAddressDialogOpen(true);
+  };
+
+  const handleCloseAddressDialog = () => {
+    setAddressDialogOpen(false);
+    setEditingAddress(null);
+    setAddressForm({
+      type: "home",
+      street: "",
+      city: "",
+      state: "",
+      pincode: "",
+      country: "USA",
+      is_default: false,
+    });
+  };
+
+  const handleSaveAddress = async () => {
+    if (!addressForm.street || !addressForm.city || !addressForm.state || !addressForm.pincode) {
+      return;
+    }
+    setSaving(true);
+    try {
+      if (editingAddress) {
+        await addressesApi.update(editingAddress._id, addressForm);
+      } else {
+        await addressesApi.add(addressForm);
+      }
+      const data = await addressesApi.list();
+      setAddresses(data?.addresses || []);
+      handleCloseAddressDialog();
+    } catch (e) {
+      console.error("Failed to save address:", e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    if (!confirm("Are you sure you want to delete this address?")) return;
+    try {
+      await addressesApi.delete(addressId);
+      const data = await addressesApi.list();
+      setAddresses(data?.addresses || []);
+    } catch (e) {
+      console.error("Failed to delete address:", e);
+    }
+  };
+
+  const handleSetDefaultAddress = async (addressId) => {
+    try {
+      const address = addresses.find((a) => a._id === addressId);
+      if (address) {
+        await addressesApi.update(addressId, { ...address, is_default: true });
+        const data = await addressesApi.list();
+        setAddresses(data?.addresses || []);
+      }
+    } catch (e) {
+      console.error("Failed to set default address:", e);
+    }
+  };
+
   if (!isLoggedIn) return null;
 
   return (
@@ -216,15 +337,126 @@ export default function Profile() {
             <ListItemText primary="Cart" />
           </ListItem>
           <Divider />
-          <ListItem button onClick={() => router.push("/checkout")}>
-            <ListItemText primary="Checkout" />
-          </ListItem>
+          
           <Divider />
           <ListItem button onClick={() => setCouponsDialogOpen(true)}>
             <LocalOfferIcon sx={{ mr: 2, color: "text.secondary" }} />
             <ListItemText primary="My coupons" />
           </ListItem>
         </List>
+
+        <Typography variant="subtitle2" sx={{ mb: 1, display: "block" }}>
+          Delivery Addresses
+        </Typography>
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, overflow: "hidden", mb: 2 }}>
+          {addressesLoading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : addresses.length === 0 ? (
+            <Box sx={{ px: 2, py: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                No saved addresses. Add one to use during checkout.
+              </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() => handleOpenAddressDialog()}
+                sx={{ borderRadius: 2 }}
+              >
+                Add Address
+              </Button>
+            </Box>
+          ) : (
+            <>
+              <List disablePadding>
+                {addresses.map((addr, idx) => (
+                  <ListItem
+                    key={addr._id}
+                    divider={idx < addresses.length - 1}
+                    sx={{ flexDirection: "column", alignItems: "flex-start", py: 2 }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", width: "100%", mb: 1 }}>
+                      {addr.type === "home" ? (
+                        <HomeIcon sx={{ mr: 1, color: "text.secondary", fontSize: 20 }} />
+                      ) : (
+                        <WorkIcon sx={{ mr: 1, color: "text.secondary", fontSize: 20 }} />
+                      )}
+                      <Typography variant="subtitle2" sx={{ textTransform: "capitalize", mr: 1 }}>
+                        {addr.type}
+                      </Typography>
+                      {addr.is_default && (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            bgcolor: "primary.main",
+                            color: "primary.contrastText",
+                            px: 1,
+                            py: 0.25,
+                            borderRadius: 1,
+                            mr: 1,
+                          }}
+                        >
+                          Default
+                        </Typography>
+                      )}
+                      <Box sx={{ flexGrow: 1 }} />
+                      {!addr.is_default && (
+                        <Button
+                          size="small"
+                          onClick={() => handleSetDefaultAddress(addr._id)}
+                          sx={{ mr: 1, minWidth: "auto" }}
+                        >
+                          Set Default
+                        </Button>
+                      )}
+                      <Button
+                        size="small"
+                        startIcon={<EditIcon />}
+                        onClick={() => handleOpenAddressDialog(addr)}
+                        sx={{ mr: 1, minWidth: "auto" }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="small"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => handleDeleteAddress(addr._id)}
+                        color="error"
+                        sx={{ minWidth: "auto" }}
+                      >
+                        Delete
+                      </Button>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "flex-start", width: "100%", pl: 4 }}>
+                      <LocationOnIcon sx={{ mr: 1, color: "text.secondary", fontSize: 16, mt: 0.5 }} />
+                      <Box>
+                        <Typography variant="body2">{addr.street}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {addr.city}, {addr.state} {addr.pincode}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {addr.country}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </ListItem>
+                ))}
+              </List>
+              <Box sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  startIcon={<AddIcon />}
+                  onClick={() => handleOpenAddressDialog()}
+                  sx={{ borderRadius: 2 }}
+                >
+                  Add New Address
+                </Button>
+              </Box>
+            </>
+          )}
+        </Box>
 
         <Typography variant="subtitle2" sx={{ mb: 1, display: "block" }}>
           Order history
@@ -500,6 +732,77 @@ export default function Profile() {
           <DialogActions>
             <Button onClick={() => { setEditOpen(false); if (user?.onboarded) setOnboardingOpen(false); }}>Cancel</Button>
             <Button variant="contained" onClick={handleSaveProfile} disabled={saving}>
+              {saving ? <CircularProgress size={24} /> : "Save"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog open={addressDialogOpen} onClose={handleCloseAddressDialog} maxWidth="sm" fullWidth>
+          <DialogTitle>{editingAddress ? "Edit Address" : "Add New Address"}</DialogTitle>
+          <DialogContent>
+            <FormControl fullWidth sx={{ mb: 2, mt: 1 }}>
+              <InputLabel>Address Type</InputLabel>
+              <Select
+                value={addressForm.type}
+                onChange={(e) => setAddressForm({ ...addressForm, type: e.target.value })}
+                label="Address Type"
+              >
+                <MenuItem value="home">Home</MenuItem>
+                <MenuItem value="work">Work</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label="Street Address"
+              value={addressForm.street}
+              onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="City"
+              value={addressForm.city}
+              onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="State"
+              value={addressForm.state}
+              onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Pincode"
+              value={addressForm.pincode}
+              onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Country"
+              value={addressForm.country}
+              onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
+              sx={{ mb: 2 }}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={addressForm.is_default}
+                  onChange={(e) => setAddressForm({ ...addressForm, is_default: e.target.checked })}
+                />
+              }
+              label="Set as default address"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseAddressDialog}>Cancel</Button>
+            <Button variant="contained" onClick={handleSaveAddress} disabled={saving}>
               {saving ? <CircularProgress size={24} /> : "Save"}
             </Button>
           </DialogActions>

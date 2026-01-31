@@ -25,6 +25,13 @@ export const auth = {
   updateProfile: (payload) => api("PUT", "/api/auth/profile", payload),
 };
 
+export const addresses = {
+  list: () => api("GET", "/api/auth/addresses"),
+  add: (addressData) => api("POST", "/api/auth/addresses", addressData),
+  update: (addressId, addressData) => api("PUT", `/api/auth/addresses/${addressId}`, addressData),
+  delete: (addressId) => api("DELETE", `/api/auth/addresses/${addressId}`),
+};
+
 export const products = {
   list: (params = {}) => {
     const q = new URLSearchParams(params).toString();
@@ -59,10 +66,11 @@ export const orders = {
   list: (limit = 20) => api("GET", `/api/orders?limit=${limit}`),
   get: (orderId) => api("GET", `/api/orders/${orderId}`),
   history: () => api("GET", "/api/orders/history"),
-  create: (paymentMethod, storeId = null) =>
+  create: (paymentMethod, storeId = null, addressId = null) =>
     api("POST", "/api/orders", {
       payment_method: paymentMethod,
       store_id: storeId || undefined,
+      address_id: addressId || undefined,
     }),
 };
 
@@ -82,10 +90,10 @@ export const bundles = {
 };
 
 export const payments = {
-  createOrder: (orderId, amountRupees) =>
+  createOrder: (orderId, amountUsd) =>
     api("POST", "/api/payments/create-order", {
       order_id: orderId,
-      amount_rupees: amountRupees,
+      amount_usd: amountUsd,
     }),
   verify: (orderId, razorpayPaymentId, razorpayOrderId, razorpaySignature) =>
     api("POST", "/api/payments/verify", {
@@ -103,6 +111,13 @@ export const chat = {
 
 export const offers = {
   list: () => api("GET", "/api/offers"),
+};
+
+export const gamification = {
+  dailyCheckin: {
+    status: () => api("GET", "/api/gamification/daily-checkin/status"),
+    claim: () => api("POST", "/api/gamification/daily-checkin"),
+  },
 };
 
 export { getToken };

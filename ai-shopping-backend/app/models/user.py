@@ -41,6 +41,11 @@ class UserInDB(UserBase):
     subscription: Subscription = Subscription()
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: datetime = Field(default_factory=datetime.utcnow)
+    last_checkin_date: Optional[datetime] = None
+    checkin_streak: int = 0
+    checkin_rewards_claimed: List[datetime] = []
+    monthly_gift_eligible: bool = False
+    monthly_gift_used: bool = False
     
     class Config:
         populate_by_name = True
