@@ -49,7 +49,7 @@ export default function Payment() {
   const openRazorpayCheckout = () => {
     if (!window.Razorpay || !keyId || !razorpayOrderId || !order_id) return;
     setPaying(true);
-    const amount = Math.round(parseFloat(total) * 100); // paise
+    const amount = Math.round(parseFloat(total) * 100); // paise for INR
     const options = {
       key: keyId,
       amount,
@@ -57,6 +57,14 @@ export default function Payment() {
       name: "AI Shopping Assistant",
       description: "Order " + order_id,
       order_id: razorpayOrderId,
+      // Enable easy payment methods (UPI, wallets, netbanking, cards)
+      method: {
+        upi: true,
+        card: true,
+        netbanking: true,
+        wallet: true,
+        emi: false,
+      },
       handler: async (res) => {
         try {
           const data = await paymentsApi.verify(order_id, res.razorpay_payment_id, res.razorpay_order_id, res.razorpay_signature);
@@ -72,7 +80,16 @@ export default function Payment() {
       },
       prefill: { email: "" },
       theme: { color: "#1976d2" },
-      modal: { ondismiss: () => setPaying(false) },
+      modal: { 
+        ondismiss: () => setPaying(false),
+        // Use old UI
+        animation: false,
+      },
+      // Retry option for better UX
+      retry: {
+        enabled: true,
+        max_count: 3,
+      },
     };
     const rzp = new window.Razorpay(options);
     rzp.on("payment.failed", () => {
@@ -124,7 +141,7 @@ export default function Payment() {
         ) : (
           <>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Order total: ${Number(total).toFixed(2)}
+              Order total: ₹{Number(total).toFixed(2)}
             </Typography>
             <Button
               variant="contained"

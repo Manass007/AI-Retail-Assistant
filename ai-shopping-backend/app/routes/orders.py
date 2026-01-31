@@ -12,6 +12,7 @@ router = APIRouter(prefix="/api/orders", tags=["Orders"])
 class CreateOrderRequest(BaseModel):
     payment_method: str  # "pay_at_store" | "online"
     store_id: Optional[str] = None  # required for pickup; optional for delivery
+    address_id: Optional[str] = None  # optional, for home delivery
 
 
 @router.get("")
@@ -186,6 +187,7 @@ async def create_order(
         "payment_method": request.payment_method,
         "payment_status": "pending" if request.payment_method == "online" else "pay_at_store",
         "store_id": request.store_id,
+        "address_id": request.address_id,
         "razorpay_order_id": None,
         "created_at": datetime.utcnow(),
     }

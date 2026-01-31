@@ -35,6 +35,24 @@ class UpdateProfileRequest(BaseModel):
     dob: str = None
     preferences: dict = None
 
+class CreateAddressRequest(BaseModel):
+    type: str  # "home" | "work"
+    street: str
+    city: str
+    state: str
+    pincode: str
+    country: str = "USA"
+    is_default: bool = False
+
+class UpdateAddressRequest(BaseModel):
+    type: str = None
+    street: str = None
+    city: str = None
+    state: str = None
+    pincode: str = None
+    country: str = None
+    is_default: bool = None
+
 # ============= HELPER FUNCTIONS =============
 
 def generate_otp() -> str:
@@ -379,4 +397,177 @@ async def update_profile(
             "preferences": updated_user.get("preferences", {}),
             "onboarded": updated_user.get("onboarded", True),
         }
+    }
+
+@router.get("/addresses")
+async def list_addresses(current_user = Depends(get_current_user)):
+    """List all user addresses"""
+    db = get_db()
+    user = await db.users.find_one({"_id": current_user["_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    addresses = user.get("addresses", [])
+    return {
+        "success": True,
+        "addresses": addresses
+    }
+
+@router.post("/addresses")
+async def create_address(
+    request: CreateAddressRequest,
+    current_user = Depends(get_current_user)
+):
+    """Add new delivery address"""
+    if request.type not in ("home", "work"):
+        raise HTTPException(status_code=400, detail="Address type must be 'home' or 'work'")
+    
+    db = get_db()
+    user = await db.users.find_one({"_id": current_user["_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    addresses = user.get("addresses", [])
+    
+    # Generate address ID
+    address_id = f"addr_{datetime.utcnow().timestamp()}"
+    
+    # If this is the first address or user wants it as default, set it as default
+    is_default = request.is_default or len(addresses) == 0
+    
+    new_address = {
+        "_id": address_id,
+        "type": request.type,
+        "street": request.street,
+        "city": request.city,
+        "state": request.state,
+        "pincode": request.pincode,
+        "country": request.country,
+        "is_default": is_default,
+        "created_at": datetime.utcnow()
+    }
+    
+    # If setting as default, unset all other defaults first
+    if is_default and len(addresses) > 0:
+        # Find all addresses that are currently default and update them
+        default_address_ids = [addr.get("_id") for addr in addresses if addr.get("is_default")]
+        for addr_id in default_address_ids:
+            await db.users.update_one(
+                {"_id": current_user["_id"], "addresses._id": addr_id},
+                {"$set": {"addresses.$.is_default": False}}
+            )
+    
+    # Ensure addresses field exists (initialize if needed)
+    if "addresses" not in user:
+        await db.users.update_one(
+            {"_id": current_user["_id"]},
+            {"$set": {"addresses": []}}
+        )
+    
+    # Add address to user's addresses array
+    result = await db.users.update_one(
+        {"_id": current_user["_id"]},
+        {"$push": {"addresses": new_address}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to save address")
+    
+    return {
+        "success": True,
+        "message": "Address added successfully",
+        "address": new_address
+    }
+
+@router.put("/addresses/{address_id}")
+async def update_address(
+    address_id: str,
+    request: UpdateAddressRequest,
+    current_user = Depends(get_current_user)
+):
+    """Update existing address"""
+    db = get_db()
+    user = await db.users.find_one({"_id": current_user["_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    addresses = user.get("addresses", [])
+    address = next((a for a in addresses if a.get("_id") == address_id), None)
+    
+    if not address:
+        raise HTTPException(status_code=404, detail="Address not found")
+    
+    # If setting as default, unset other defaults first
+    if request.is_default is not None and request.is_default:
+        # Find all other addresses that are currently default and update them
+        other_default_ids = [addr.get("_id") for addr in addresses if addr.get("_id") != address_id and addr.get("is_default")]
+        for addr_id in other_default_ids:
+            await db.users.update_one(
+                {"_id": current_user["_id"], "addresses._id": addr_id},
+                {"$set": {"addresses.$.is_default": False}}
+            )
+    
+    # Build update data
+    update_data = {}
+    if request.type is not None:
+        if request.type not in ("home", "work"):
+            raise HTTPException(status_code=400, detail="Address type must be 'home' or 'work'")
+        update_data["addresses.$.type"] = request.type
+    if request.street is not None:
+        update_data["addresses.$.street"] = request.street
+    if request.city is not None:
+        update_data["addresses.$.city"] = request.city
+    if request.state is not None:
+        update_data["addresses.$.state"] = request.state
+    if request.pincode is not None:
+        update_data["addresses.$.pincode"] = request.pincode
+    if request.country is not None:
+        update_data["addresses.$.country"] = request.country
+    if request.is_default is not None:
+        update_data["addresses.$.is_default"] = request.is_default
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
+    # Update address
+    await db.users.update_one(
+        {"_id": current_user["_id"], "addresses._id": address_id},
+        {"$set": update_data}
+    )
+    
+    # Get updated address
+    updated_user = await db.users.find_one({"_id": current_user["_id"]})
+    updated_address = next((a for a in updated_user.get("addresses", []) if a.get("_id") == address_id), None)
+    
+    return {
+        "success": True,
+        "message": "Address updated successfully",
+        "address": updated_address
+    }
+
+@router.delete("/addresses/{address_id}")
+async def delete_address(
+    address_id: str,
+    current_user = Depends(get_current_user)
+):
+    """Delete address"""
+    db = get_db()
+    user = await db.users.find_one({"_id": current_user["_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    addresses = user.get("addresses", [])
+    address = next((a for a in addresses if a.get("_id") == address_id), None)
+    
+    if not address:
+        raise HTTPException(status_code=404, detail="Address not found")
+    
+    # Remove address
+    await db.users.update_one(
+        {"_id": current_user["_id"]},
+        {"$pull": {"addresses": {"_id": address_id}}}
+    )
+    
+    return {
+        "success": True,
+        "message": "Address deleted successfully"
     }

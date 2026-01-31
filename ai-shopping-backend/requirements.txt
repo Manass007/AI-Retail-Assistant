@@ -28,6 +28,7 @@ python-dotenv==1.0.0
 
 # Payments (Razorpay demo)
 razorpay==1.4.1
+setuptools>=65.0.0
 
 # Utils
 python-dateutil==2.8.2
