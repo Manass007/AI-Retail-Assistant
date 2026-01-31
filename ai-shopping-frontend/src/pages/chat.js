@@ -106,8 +106,9 @@ export default function Chat() {
   return (
     <>
       <Head>
-        <title>Chat · AI Shopping Assistant</title>
+        <title>Chat · AIVA</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/aiva_logo1.png" />
       </Head>
       <Box sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", px: 2 }}>
         <Typography variant="h1" sx={{ fontSize: "1.25rem", py: 2 }}>

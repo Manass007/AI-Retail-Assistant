@@ -81,8 +81,9 @@ export default function ProductDetail() {
   return (
     <>
       <Head>
-        <title>{name} · AI Shopping Assistant</title>
+        <title>{name} · AIVA</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/aiva_logo1.png" />
       </Head>
       <Box sx={{ pb: 3 }}>
         <Box sx={{ position: "relative", pt: "100%", bgcolor: "grey.100" }}>
