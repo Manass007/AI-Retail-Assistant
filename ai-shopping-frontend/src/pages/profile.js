@@ -25,6 +25,10 @@ import {
   Popover,
   Checkbox,
   ListItemButton,
+  Tabs,
+  Tab,
+  Paper,
+  IconButton,
 } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
@@ -40,8 +44,10 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
 import { useAuth } from "@/context/AuthContext";
-import { orders as ordersApi, auth as authApi, cart as cartApi, offers as offersApi, addresses as addressesApi } from "@/lib/api";
+import { useSnackbar } from "@/context/SnackbarContext";
+import { orders as ordersApi, auth as authApi, cart as cartApi, offers as offersApi, addresses as addressesApi, watchlist as watchlistApi } from "@/lib/api";
 
 const PREF_CATEGORIES = ["Electronics", "Fashion", "Home", "Sports", "Office", "Dairy", "Groceries", "Staples", "Personal Care"];
 const BUDGET_OPTIONS = [{ value: "low", label: "Budget-friendly" }, { value: "mid", label: "Moderate" }, { value: "high", label: "Premium" }];
@@ -79,6 +85,10 @@ export default function Profile() {
     country: "USA",
     is_default: false,
   });
+  const [cartWatchlistTab, setCartWatchlistTab] = useState(0);
+  const [watchlistItems, setWatchlistItems] = useState([]);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
+  const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
     if (!isLoggedIn) router.replace("/login");
@@ -129,6 +139,21 @@ export default function Profile() {
       }
     })();
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    (async () => {
+      setWatchlistLoading(true);
+      try {
+        const res = await watchlistApi.get();
+        setWatchlistItems(res?.watchlist || []);
+      } catch {
+        setWatchlistItems([]);
+      } finally {
+        setWatchlistLoading(false);
+      }
+    })();
+  }, [isLoggedIn, cartWatchlistTab]);
 
   useEffect(() => {
     if (!isLoggedIn || !couponsDialogOpen) return;
@@ -373,14 +398,103 @@ export default function Profile() {
             </Button>
           </Box>
         )}
+        <Typography variant="subtitle2" sx={{ mb: 1, display: "block" }}>
+          Cart & Watchlist
+        </Typography>
+        <Paper sx={{ mb: 2, borderRadius: 2, overflow: "hidden" }}>
+          <Tabs value={cartWatchlistTab} onChange={(e, newValue) => setCartWatchlistTab(newValue)}>
+            <Tab icon={<ShoppingBagIcon />} iconPosition="start" label="Cart" />
+            <Tab icon={<BookmarkIcon />} iconPosition="start" label="Watchlist" />
+          </Tabs>
+          <Box sx={{ p: 2 }}>
+            {cartWatchlistTab === 0 ? (
+              <Box>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<ShoppingBagIcon />}
+                  onClick={() => router.push("/cart")}
+                  sx={{ borderRadius: 2, mb: 1 }}
+                >
+                  View Cart
+                </Button>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", textAlign: "center" }}>
+                  Manage your cart items
+                </Typography>
+              </Box>
+            ) : (
+              <Box>
+                {watchlistLoading ? (
+                  <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                    <CircularProgress size={24} />
+                  </Box>
+                ) : watchlistItems.length === 0 ? (
+                  <Box sx={{ textAlign: "center", py: 3 }}>
+                    <BookmarkIcon sx={{ fontSize: 48, color: "text.secondary", mb: 1 }} />
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Your watchlist is empty
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Items moved from cart will appear here
+                    </Typography>
+                  </Box>
+                ) : (
+                  <List disablePadding>
+                    {watchlistItems.map((item, idx) => {
+                      const product = item.product || {};
+                      return (
+                        <ListItem
+                          key={product._id || idx}
+                          divider={idx < watchlistItems.length - 1}
+                          sx={{ flexDirection: "column", alignItems: "flex-start", py: 2, px: 0 }}
+                        >
+                          <Box sx={{ display: "flex", gap: 2, width: "100%" }}>
+                            <Box
+                              component="img"
+                              src={product.image_url || "/placeholder.png"}
+                              alt={product.name}
+                              sx={{ width: 60, height: 60, borderRadius: 1, objectFit: "cover", flexShrink: 0 }}
+                            />
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography variant="body2" fontWeight={600} noWrap>
+                                {product.name}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                ${Number(product.price || 0).toFixed(2)}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {item.manual_move ? "Manually added" : "Moved from cart"}
+                              </Typography>
+                            </Box>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              startIcon={<AddShoppingCartIcon />}
+                              onClick={async () => {
+                                try {
+                                  await cartApi.add(product._id, 1);
+                                  showSnackbar("Added to cart", "success");
+                                  router.push("/cart");
+                                } catch (e) {
+                                  showSnackbar(e.message || "Failed to add to cart", "error");
+                                }
+                              }}
+                              sx={{ borderRadius: 2 }}
+                            >
+                              Add to cart
+                            </Button>
+                          </Box>
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                )}
+              </Box>
+            )}
+          </Box>
+        </Paper>
+
         <List sx={{ bgcolor: "background.paper", borderRadius: 2, overflow: "hidden", mb: 2 }}>
-          <ListItem button onClick={() => router.push("/cart")}>
-            <ShoppingBagIcon sx={{ mr: 2, color: "text.secondary" }} />
-            <ListItemText primary="Cart" />
-          </ListItem>
-          <Divider />
-          
-          <Divider />
           <ListItem button onClick={() => setCouponsDialogOpen(true)}>
             <LocalOfferIcon sx={{ mr: 2, color: "text.secondary" }} />
             <ListItemText primary="My coupons" />

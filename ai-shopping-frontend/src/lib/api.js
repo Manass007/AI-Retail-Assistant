@@ -120,5 +120,13 @@ export const gamification = {
   },
 };
 
+export const watchlist = {
+  get: () => api("GET", "/api/watchlist"),
+  comboSuggestions: (productId) => api("GET", `/api/watchlist/combo-suggestions/${productId}`),
+  comboSuggestionsCart: () => api("GET", "/api/watchlist/combo-suggestions/cart"),
+  comboSuggestionsCheckout: () => api("GET", "/api/watchlist/combo-suggestions/checkout"),
+  moveFromCart: (productId) => api("POST", `/api/watchlist/move-from-cart/${productId}`),
+};
+
 export { getToken };
 export default api;

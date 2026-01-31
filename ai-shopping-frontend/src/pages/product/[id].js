@@ -13,7 +13,8 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import { useAuth } from "@/context/AuthContext";
-import { products as productsApi, cart as cartApi, bundles } from "@/lib/api";
+import { products as productsApi, cart as cartApi, bundles, watchlist } from "@/lib/api";
+import WatchlistComboCard from "@/components/watchlist/WatchlistComboCard";
 
 export default function ProductDetail() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function ProductDetail() {
   const { isLoggedIn } = useAuth();
   const [product, setProduct] = useState(null);
   const [bundleOffers, setBundleOffers] = useState([]);
+  const [comboSuggestions, setComboSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
 
@@ -29,19 +31,21 @@ export default function ProductDetail() {
     (async () => {
       setLoading(true);
       try {
-        const [prodRes, bundleRes] = await Promise.all([
+        const [prodRes, bundleRes, comboRes] = await Promise.all([
           productsApi.get(id),
           bundles.forProduct(id).catch(() => ({ bundles: [] })),
+          isLoggedIn ? watchlist.comboSuggestions(id).catch(() => ({ suggestions: [] })) : Promise.resolve({ suggestions: [] }),
         ]);
         setProduct(prodRes?.product || null);
         setBundleOffers(bundleRes?.bundles || []);
+        setComboSuggestions(comboRes?.suggestions || []);
       } catch {
         setProduct(null);
       } finally {
         setLoading(false);
       }
     })();
-  }, [id]);
+  }, [id, isLoggedIn]);
 
   const handleAddToCart = async () => {
     if (!isLoggedIn) {
@@ -181,6 +185,29 @@ export default function ProductDetail() {
                   sx={{ mr: 1, mb: 1, borderRadius: 2 }}
                 />
               ))}
+            </Box>
+          )}
+          {comboSuggestions.length > 0 && (
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
+                Frequently bought together with items from your Watchlist
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {comboSuggestions.slice(0, 3).map((suggestion, index) => (
+                  <WatchlistComboCard
+                    key={`${suggestion.watchlist_product?._id}-${index}`}
+                    suggestion={suggestion}
+                    onAddToCart={() => {
+                      // Refresh suggestions after adding to cart
+                      if (isLoggedIn && id) {
+                        watchlist.comboSuggestions(id)
+                          .then((res) => setComboSuggestions(res?.suggestions || []))
+                          .catch(() => {});
+                      }
+                    }}
+                  />
+                ))}
+              </Box>
             </Box>
           )}
           <Button
