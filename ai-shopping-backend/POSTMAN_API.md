@@ -578,6 +578,176 @@ Example: `POST http://localhost:5000/api/gamification/use-coupon/SPIN1234`
 
 ---
 
+## 8. Orders (Bearer token required)
+
+### GET /api/orders/history
+
+**Request:** No body. Returns last ordered items and frequently ordered products (for quick-add in chat).
+
+**Example response:**
+```json
+{
+  "success": true,
+  "last_ordered": [
+    { "product_id": "prod_g1", "quantity": 2, "price": 2.99, "product": { "_id": "prod_g1", "name": "Milk", "category": "Dairy", "price": 2.99 } }
+  ],
+  "frequently_ordered": [
+    { "product_id": "prod_g1", "order_count": 3, "product": { "_id": "prod_g1", "name": "Milk" } }
+  ]
+}
+```
+
+### POST /api/orders
+
+**Request body:** Create order from current cart. Choose payment: pay at store (pickup) or online (Razorpay).
+```json
+{
+  "payment_method": "pay_at_store",
+  "store_id": "store_1"
+}
+```
+For online payment: `"payment_method": "online"`, `store_id` optional. For pickup: pass `store_id` from GET /api/stores/pickup.
+
+**Example response:**
+```json
+{
+  "success": true,
+  "order_id": "ord_1234567890.123",
+  "total": 25.98,
+  "payment_method": "pay_at_store",
+  "payment_status": "pay_at_store",
+  "message": "Pay at store when you pick up."
+}
+```
+If `payment_method` is `online`, call POST /api/payments/create-order with this `order_id` and `amount_rupees` next.
+
+---
+
+## 9. Pickup stores (no auth)
+
+### GET /api/stores/pickup
+
+**Request:** No body. Query (optional): `city`, `pincode`.
+
+Example: `GET http://localhost:5000/api/stores/pickup?city=Downtown`
+
+**Example response:**
+```json
+{
+  "success": true,
+  "stores": [
+    { "_id": "store_1", "name": "QuickPick Downtown", "address": "123 Main St", "city": "Downtown", "pincode": "10001", "is_active": true }
+  ]
+}
+```
+
+---
+
+## 10. Bundles (no auth)
+
+### GET /api/bundles
+
+**Request:** No body. List all bundles (e.g. perfume + trimmer 20% off).
+
+**Example response:**
+```json
+{
+  "success": true,
+  "bundles": [
+    {
+      "_id": "bundle_1",
+      "name": "Perfume + Trimmer Combo",
+      "description": "Buy perfume with trimmer and get 20% off total.",
+      "products": [ { "_id": "prod_p1", "name": "Men's Perfume", "price": 40 }, { "_id": "prod_p2", "name": "Electric Trimmer", "price": 50 } ],
+      "discount_percent": 20,
+      "total_original": 90,
+      "total_after_discount": 72
+    }
+  ]
+}
+```
+
+### GET /api/bundles/product/{product_id}
+
+**Request:** No body. Bundles that include this product (for budget / upsell).  
+Example: `GET http://localhost:5000/api/bundles/product/prod_p1`
+
+---
+
+## 11. Payments – Razorpay (Bearer token required)
+
+Set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in `.env` for demo.
+
+### POST /api/payments/create-order
+
+**Request body:** Create Razorpay order for an existing order (from POST /api/orders with payment_method=online).
+```json
+{
+  "order_id": "ord_1234567890.123",
+  "amount_rupees": 25.98
+}
+```
+Amount in INR (Razorpay demo). Returns `razorpay_order_id` and `key_id` for frontend Checkout.
+
+**Example response:**
+```json
+{
+  "success": true,
+  "razorpay_order_id": "order_xxx",
+  "amount": 2598,
+  "currency": "INR",
+  "key_id": "rzp_test_xxx",
+  "order_id": "ord_1234567890.123"
+}
+```
+
+### POST /api/payments/verify
+
+**Request body:** After user pays, verify signature and mark order paid.
+```json
+{
+  "order_id": "ord_1234567890.123",
+  "razorpay_payment_id": "pay_xxx",
+  "razorpay_order_id": "order_xxx",
+  "razorpay_signature": "xxx"
+}
+```
+
+---
+
+## 12. Chat / Assistant (Bearer token required)
+
+### POST /api/chat
+
+**Request body:** Natural-language message. Supports: urgent groceries (milk, wheat flour, muesli), quick-add from last/frequently ordered, bundle offers for budget.
+```json
+{
+  "message": "Hey I am in a hurry and need some groceries - milk, wheat flour, muesli. Need to pick up from nearby store.",
+  "conversation_history": []
+}
+```
+Other examples: "Show my last ordered items", "I want perfume but it's expensive" (triggers bundle offer).
+
+**Example response:**
+```json
+{
+  "success": true,
+  "reply": "We have milk, wheat flour, and muesli ready for you! Add them to cart and choose pay at store when you pick up from QuickPick.",
+  "quick_add_products": [
+    { "_id": "prod_g1", "name": "Milk", "category": "Dairy", "price": 2.99 },
+    { "_id": "prod_g2", "name": "Wheat Flour", "category": "Staples", "price": 3.49 },
+    { "_id": "prod_g3", "name": "Muesli", "category": "Groceries", "price": 5.99 }
+  ],
+  "last_ordered": [ ... ],
+  "frequently_ordered": [ ... ],
+  "pickup_stores": [ { "_id": "store_1", "name": "QuickPick Downtown", "address": "123 Main St", "city": "Downtown" } ],
+  "bundle_offers": [ ... ]
+}
+```
+Use `quick_add_products` to show "Add to cart" buttons; use `pickup_stores` for store selection; use `bundle_offers` for discount combos.
+
+---
+
 ## Quick test order (using real data)
 
 1. **GET** `http://localhost:5000/` → 200, JSON with `endpoints`.
@@ -594,5 +764,10 @@ Example: `POST http://localhost:5000/api/gamification/use-coupon/SPIN1234`
 12. **GET** `http://localhost:5000/api/recommendations/similar/prod_19` → 200, similar products.
 13. **POST** `http://localhost:5000/api/gamification/spin-wheel` → 200 (Bearer; once per month).
 14. **GET** `http://localhost:5000/api/gamification/my-coupons` → 200 (Bearer).
+15. **GET** `http://localhost:5000/api/orders/history` → 200 (last_ordered, frequently_ordered).
+16. **GET** `http://localhost:5000/api/stores/pickup` → 200 (pickup stores).
+17. **GET** `http://localhost:5000/api/bundles` → 200 (bundle offers).
+18. **POST** `http://localhost:5000/api/chat` with `{"message":"I need milk, wheat flour and muesli for pickup"}` → 200 (reply + quick_add_products + pickup_stores).
+19. **POST** `http://localhost:5000/api/orders` with `{"payment_method":"pay_at_store","store_id":"store_1"}` → 200 (order created; cart cleared).
 
-Ensure the backend is running (`uvicorn app.main:app --reload --port 5000`) and the DB is seeded (`python seed_data.py`). Product IDs `prod_1` … `prod_20` and categories `Electronics`, `Fashion`, `Home`, `Sports`, `Office` match the seeded data.
+Ensure the backend is running (`uvicorn app.main:app --reload --port 5000`) and the DB is seeded (`python seed_data.py`). Re-run seed to get groceries (prod_g1–prod_g10), perfume/trimmer (prod_p1, prod_p2), pickup stores, bundles, and sample orders. Product IDs: `prod_1` … `prod_20`, `prod_g1` … `prod_g10`, `prod_p1`, `prod_p2`. Categories include `Electronics`, `Fashion`, `Home`, `Sports`, `Office`, `Dairy`, `Groceries`, `Staples`, `Personal Care`.

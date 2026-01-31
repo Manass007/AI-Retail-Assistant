@@ -354,6 +354,10 @@ async def update_profile(
     if request.preferences:
         update_data["preferences"] = request.preferences
     
+    # Mark profile as completed (onboarded) when user submits name/dob/preferences
+    if update_data:
+        update_data["onboarded"] = True
+
     # Update user
     await db.users.update_one(
         {"_id": current_user["_id"]},
@@ -372,6 +376,7 @@ async def update_profile(
             "name": updated_user["name"],
             "phone": updated_user.get("phone", ""),
             "dob": updated_user.get("dob"),
-            "preferences": updated_user.get("preferences", {})
+            "preferences": updated_user.get("preferences", {}),
+            "onboarded": updated_user.get("onboarded", True),
         }
     }

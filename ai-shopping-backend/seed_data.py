@@ -300,6 +300,43 @@ SAMPLE_PRODUCTS = [
     }
 ]
 
+# Groceries, Dairy, Staples, Snacks (daily-life categories)
+GROCERY_PRODUCTS = [
+    {"_id": "prod_g1", "name": "Milk", "category": "Dairy", "price": 2.99, "brand": "FreshFarm", "image_url": "https://images.unsplash.com/photo-1563636619-e9143da7973b", "description": "Fresh full-fat milk 1L", "tags": ["dairy", "milk", "groceries"], "stock_quantity": 200, "is_in_stock": True, "popularity_score": 95.0, "created_at": datetime.utcnow()},
+    {"_id": "prod_g2", "name": "Wheat Flour", "category": "Staples", "price": 3.49, "brand": "HomeGrain", "image_url": "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020a", "description": "Whole wheat flour 1kg", "tags": ["groceries", "flour", "staples", "wheat"], "stock_quantity": 150, "is_in_stock": True, "popularity_score": 88.0, "created_at": datetime.utcnow()},
+    {"_id": "prod_g3", "name": "Muesli", "category": "Groceries", "price": 5.99, "brand": "BreakfastBowl", "image_url": "https://images.unsplash.com/photo-1517673132405-a56a62b18ddb", "description": "Oats and fruit muesli 500g", "tags": ["groceries", "breakfast", "muesli", "cereal"], "stock_quantity": 80, "is_in_stock": True, "popularity_score": 82.0, "created_at": datetime.utcnow()},
+    {"_id": "prod_g4", "name": "Butter", "category": "Dairy", "price": 4.49, "brand": "FreshFarm", "image_url": "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d", "description": "Salted butter 200g", "tags": ["dairy", "butter", "groceries"], "stock_quantity": 100, "is_in_stock": True, "popularity_score": 75.0, "created_at": datetime.utcnow()},
+    {"_id": "prod_g5", "name": "Rice", "category": "Staples", "price": 8.99, "brand": "HomeGrain", "image_url": "https://images.unsplash.com/photo-1586201375761-83865001e31c", "description": "Basmati rice 2kg", "tags": ["groceries", "rice", "staples"], "stock_quantity": 120, "is_in_stock": True, "popularity_score": 90.0, "created_at": datetime.utcnow()},
+    {"_id": "prod_g6", "name": "Eggs", "category": "Dairy", "price": 3.99, "brand": "FreshFarm", "image_url": "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f", "description": "Free-range eggs dozen", "tags": ["dairy", "eggs", "groceries"], "stock_quantity": 180, "is_in_stock": True, "popularity_score": 92.0, "created_at": datetime.utcnow()},
+    {"_id": "prod_g7", "name": "Bread", "category": "Groceries", "price": 2.49, "brand": "DailyBake", "image_url": "https://images.unsplash.com/photo-1509440159596-0249088772ff", "description": "Whole grain bread loaf", "tags": ["groceries", "bread", "bakery"], "stock_quantity": 90, "is_in_stock": True, "popularity_score": 85.0, "created_at": datetime.utcnow()},
+    {"_id": "prod_g8", "name": "Yogurt", "category": "Dairy", "price": 3.29, "brand": "FreshFarm", "image_url": "https://images.unsplash.com/photo-1571212515416-ffe4b2d2b58d", "description": "Plain yogurt 500g", "tags": ["dairy", "yogurt", "groceries"], "stock_quantity": 110, "is_in_stock": True, "popularity_score": 78.0, "created_at": datetime.utcnow()},
+    {"_id": "prod_g9", "name": "Olive Oil", "category": "Staples", "price": 9.99, "brand": "KitchenGold", "image_url": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5", "description": "Extra virgin olive oil 500ml", "tags": ["groceries", "oil", "staples"], "stock_quantity": 60, "is_in_stock": True, "popularity_score": 70.0, "created_at": datetime.utcnow()},
+    {"_id": "prod_g10", "name": "Honey", "category": "Groceries", "price": 6.49, "brand": "NatureSweet", "image_url": "https://images.unsplash.com/photo-1587049352846-4a222e784d38", "description": "Pure honey 350g", "tags": ["groceries", "honey", "breakfast"], "stock_quantity": 70, "is_in_stock": True, "popularity_score": 72.0, "created_at": datetime.utcnow()},
+]
+
+# Perfume & Trimmer for bundle demo (prices in USD for consistency; bundle 20% off)
+PERFUME_TRIMMER_PRODUCTS = [
+    {"_id": "prod_p1", "name": "Men's Perfume", "category": "Personal Care", "price": 40.00, "brand": "ScentPro", "image_url": "https://images.unsplash.com/photo-1541643600914-78b084683b50", "description": "Long-lasting men's fragrance", "tags": ["perfume", "fragrance", "personal-care"], "stock_quantity": 50, "is_in_stock": True, "popularity_score": 65.0, "created_at": datetime.utcnow()},
+    {"_id": "prod_p2", "name": "Electric Trimmer", "category": "Personal Care", "price": 50.00, "brand": "GroomPro", "image_url": "https://images.unsplash.com/photo-1622286342621-4bd786c2447c", "description": "Cordless electric trimmer", "tags": ["trimmer", "grooming", "personal-care"], "stock_quantity": 45, "is_in_stock": True, "popularity_score": 68.0, "created_at": datetime.utcnow()},
+]
+
+PICKUP_STORES = [
+    {"_id": "store_1", "name": "QuickPick Downtown", "address": "123 Main St", "city": "Downtown", "pincode": "10001", "is_active": True},
+    {"_id": "store_2", "name": "QuickPick Mall", "address": "456 Mall Ave", "city": "Central", "pincode": "10002", "is_active": True},
+    {"_id": "store_3", "name": "QuickPick Express", "address": "789 Highway Rd", "city": "Suburb", "pincode": "10003", "is_active": True},
+]
+
+PRODUCT_BUNDLES = [
+    {"_id": "bundle_1", "name": "Perfume + Trimmer Combo", "product_ids": ["prod_p1", "prod_p2"], "discount_percent": 20, "description": "Buy perfume with trimmer and get 20% off total. Great value!"},
+]
+
+PROMO_CODES = [
+    {"_id": "promo_winter20", "code": "WINTER20", "name": "Winter Festive", "description": "20% off (Dec 15-31)", "discount_percent": 20, "min_order": 0, "valid_from": datetime(2024, 12, 15), "valid_until": datetime(2025, 12, 31), "is_active": True, "type": "festive"},
+    {"_id": "promo_xmas25", "code": "XMAS25", "name": "Christmas Offer", "description": "25% off orders", "discount_percent": 25, "min_order": 500, "valid_from": datetime(2024, 12, 15), "valid_until": datetime(2025, 12, 31), "is_active": True, "type": "festive"},
+    {"_id": "promo_bday10", "code": "BDAY10", "name": "Birthday Special", "description": "10% off on your birthday month", "discount_percent": 10, "min_order": 0, "valid_from": datetime(2024, 1, 1), "valid_until": datetime(2026, 12, 31), "is_active": True, "type": "birthday"},
+    {"_id": "promo_save10", "code": "SAVE10", "name": "Welcome Offer", "description": "10% off first order", "discount_percent": 10, "min_order": 100, "valid_from": datetime(2024, 1, 1), "valid_until": datetime(2026, 12, 31), "is_active": True, "type": "general"},
+]
+
 async def seed_database():
     """Seed the database with sample data"""
     
@@ -325,18 +362,54 @@ async def seed_database():
         result3 = await db.interactions.delete_many({})
         result4 = await db.coupons.delete_many({})
         result5 = await db.stock_notifications.delete_many({})
-        
+        try:
+            r6 = await db.orders.delete_many({})
+            print(f"   Deleted {r6.deleted_count} orders")
+        except Exception:
+            pass
+        try:
+            r7 = await db.pickup_stores.delete_many({})
+            print(f"   Deleted {r7.deleted_count} pickup stores")
+        except Exception:
+            pass
+        try:
+            r8 = await db.product_bundles.delete_many({})
+            print(f"   Deleted {r8.deleted_count} product bundles")
+        except Exception:
+            pass
+        try:
+            r9 = await db.promo_codes.delete_many({})
+            print(f"   Deleted {r9.deleted_count} promo codes")
+        except Exception:
+            pass
+
         print(f"   Deleted {result1.deleted_count} products")
         print(f"   Deleted {result2.deleted_count} users")
         print(f"   Deleted {result3.deleted_count} interactions")
         print(f"   Deleted {result4.deleted_count} coupons")
         print(f"   Deleted {result5.deleted_count} stock notifications")
         
-        # Insert products
-        print(f"\n📦 Inserting {len(SAMPLE_PRODUCTS)} products...")
-        result = await db.products.insert_many(SAMPLE_PRODUCTS)
+        # Insert products (main + grocery + perfume/trimmer)
+        all_products = SAMPLE_PRODUCTS + GROCERY_PRODUCTS + PERFUME_TRIMMER_PRODUCTS
+        print(f"\n📦 Inserting {len(all_products)} products...")
+        result = await db.products.insert_many(all_products)
         print(f"✅ Inserted {len(result.inserted_ids)} products")
         
+        # Insert pickup stores
+        print("\n🏪 Inserting pickup stores...")
+        await db.pickup_stores.insert_many(PICKUP_STORES)
+        print(f"✅ Inserted {len(PICKUP_STORES)} pickup stores")
+        
+        # Insert product bundles
+        print("\n📦 Inserting product bundles...")
+        await db.product_bundles.insert_many(PRODUCT_BUNDLES)
+        print(f"✅ Inserted {len(PRODUCT_BUNDLES)} product bundles")
+
+        # Insert promo codes (offers / discount codes)
+        print("\n🎟️ Inserting promo codes...")
+        await db.promo_codes.insert_many(PROMO_CODES)
+        print(f"✅ Inserted {len(PROMO_CODES)} promo codes")
+
         # Create sample user
         print("\n👤 Creating sample user...")
         sample_user = {
@@ -378,6 +451,16 @@ async def seed_database():
         }
         result = await db.users.insert_one(sample_user)
         print(f"✅ Created user with ID: {result.inserted_id}")
+        
+        # Create sample orders (for last_ordered / frequently_ordered)
+        print("\n📋 Creating sample orders...")
+        sample_orders = [
+            {"_id": "ord_1", "user_id": "user_sample_001", "items": [{"product_id": "prod_g1", "quantity": 2, "price": 2.99}, {"product_id": "prod_g2", "quantity": 1, "price": 3.49}], "total": 9.47, "payment_method": "pay_at_store", "payment_status": "paid", "store_id": "store_1", "created_at": datetime.utcnow() - timedelta(days=2)},
+            {"_id": "ord_2", "user_id": "user_sample_001", "items": [{"product_id": "prod_g1", "quantity": 1, "price": 2.99}, {"product_id": "prod_g3", "quantity": 1, "price": 5.99}], "total": 8.98, "payment_method": "online", "payment_status": "paid", "store_id": "store_2", "created_at": datetime.utcnow() - timedelta(days=5)},
+            {"_id": "ord_3", "user_id": "user_sample_001", "items": [{"product_id": "prod_1", "quantity": 1, "price": 79.99}], "total": 79.99, "payment_method": "online", "payment_status": "paid", "store_id": None, "created_at": datetime.utcnow() - timedelta(days=10)},
+        ]
+        await db.orders.insert_many(sample_orders)
+        print(f"✅ Created {len(sample_orders)} sample orders")
         
         # Create sample interactions
         print("\n🔄 Creating sample interactions...")

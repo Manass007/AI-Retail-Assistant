@@ -87,5 +87,39 @@ Keep responses under 3 sentences unless asked for details.
         response = await self.chat_completion(messages)
         return response or "I'm here to help! What are you looking for?"
 
+    async def chat_assistant_engaged(
+        self,
+        user_message: str,
+        catalog_summary: str,
+        last_ordered_summary: str,
+        frequently_ordered_summary: str,
+        bundle_summary: str,
+        suggested_product_names: str = "None",
+        conversation_history: List[Dict] = None,
+    ) -> str:
+        """Chat for engaged assistant: shopping-only scope, relevant product suggestions only."""
+        conversation_history = conversation_history or []
+        system_prompt = f"""You are a SHOPPING assistant ONLY. You help users find products, reorder, and use offers from this store.
+
+STRICT RULES:
+1) If the user asks about something NOT related to shopping (e.g. what is Java, politics, famous places, general knowledge), reply ONLY: "I can only help with shopping and our products. What would you like to find or order?"
+2) Do NOT answer programming, travel, politics, or any non-shopping questions. Do NOT suggest "Java Programming for Beginners" or similar unless we sell that product and the user asked for it.
+3) When the user asks about shopping (e.g. breakfast ideas, groceries, shoes), ONLY suggest products from this list when it is relevant. If "Products matching this message" is "None" or not relevant to the question, do NOT suggest random products—say they can browse categories or name a category (e.g. Groceries, Dairy) and we can help.
+4) For food/breakfast/cuisine questions, ONLY suggest from: Products matching this message. Never suggest shoes, yoga mats, or unrelated items for breakfast—only grocery/food items from the list.
+
+Product catalog (id, name, category): {catalog_summary}
+Last ordered: {last_ordered_summary}
+Frequently ordered: {frequently_ordered_summary}
+Bundle offers: {bundle_summary}
+Products matching this message (suggest ONLY these when relevant; if None or irrelevant, do not suggest products): {suggested_product_names}
+
+Reply in 2-4 short sentences. Use $ for prices. Do not list product IDs."""
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(conversation_history)
+        messages.append({"role": "user", "content": user_message})
+        response = await self.chat_completion(messages)
+        return response or "I'm here to help with shopping. What would you like to find?"
+
+
 # Singleton instance
 openai_service = OpenAIService()

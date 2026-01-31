@@ -7,7 +7,7 @@ from app.database import connect_db, close_db
 from jobs.cart_migration_job import start_scheduler
 
 # Import routes
-from app.routes import auth, products, cart, recommendations, gamification
+from app.routes import auth, products, cart, recommendations, gamification, orders, stores, bundles, payments, chat, offers
 
 # ============= LIFESPAN EVENTS =============
 
@@ -57,6 +57,12 @@ app.include_router(products.router)
 app.include_router(cart.router)
 app.include_router(recommendations.router)
 app.include_router(gamification.router)
+app.include_router(orders.router)
+app.include_router(stores.router)
+app.include_router(bundles.router)
+app.include_router(payments.router)
+app.include_router(chat.router)
+app.include_router(offers.router)
 
 # ============= HEALTH CHECK =============
 
@@ -71,7 +77,13 @@ async def root():
             "products": "/api/products",
             "cart": "/api/cart",
             "recommendations": "/api/recommendations",
-            "gamification": "/api/gamification"
+            "gamification": "/api/gamification",
+            "orders": "/api/orders",
+            "stores": "/api/stores",
+            "bundles": "/api/bundles",
+            "payments": "/api/payments",
+            "chat": "/api/chat",
+            "offers": "/api/offers"
         }
     }
 
@@ -86,16 +98,16 @@ async def health_check():
 
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
-    return {
-        "success": False,
-        "message": "Route not found"
-    }
+    return JSONResponse(
+        status_code=404,
+        content={"success": False, "message": "Route not found"},
+    )
 
 # ============= ERROR HANDLER =============
 
 @app.exception_handler(500)
 async def server_error_handler(request, exc):
-    return {
-        "success": False,
-        "message": "Internal server error"
-    }
+    return JSONResponse(
+        status_code=500,
+        content={"success": False, "message": "Internal server error"},
+    )

@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     ENABLE_EMAIL: bool = False
     ENABLE_OPENAI: bool = True
     
+    # Razorpay (demo/trial)
+    RAZORPAY_KEY_ID: Optional[str] = None
+    RAZORPAY_KEY_SECRET: Optional[str] = None
+    
     class Config:
         env_file = ".env"
 
