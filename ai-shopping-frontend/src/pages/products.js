@@ -115,9 +115,50 @@ export default function Products() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Box sx={{ px: 2, py: 2 }}>
-        <Typography variant="h1" sx={{ fontSize: "1.5rem", mb: 2 }}>
-          Products
-        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            mb: 2,
+          }}
+        >
+          <Box
+            onClick={() => router.push("/")}
+            sx={{
+              width: { xs: 56, sm: 64 },
+              height: { xs: 56, sm: 64 },
+              borderRadius: 3,
+              bgcolor: "background.paper",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              flexShrink: 0,
+              p: 1,
+              cursor: "pointer",
+              transition: "transform 0.2s, boxShadow 0.2s",
+              "&:hover": {
+                transform: "scale(1.05)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              },
+            }}
+          >
+            <Box
+              component="img"
+              src="/aiva_logo1.png"
+              alt="AIVA Logo"
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+              }}
+            />
+          </Box>
+          <Typography variant="h1" sx={{ fontSize: "1.5rem" }}>
+            Products
+          </Typography>
+        </Box>
         <TextField
           fullWidth
           placeholder="Search"

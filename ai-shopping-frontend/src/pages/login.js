@@ -244,17 +244,37 @@ export default function Login() {
         <Container maxWidth="sm" sx={{ position: "relative", zIndex: 1 }}>
           <Box sx={{ textAlign: "center", mb: 4 }}>
             <Box
-              component="img"
-              src="/aiva_logo1.png"
-              alt="AIVA Logo"
+              onClick={() => router.push("/")}
               sx={{
-                width: { xs: 80, sm: 100, md: 120 },
-                height: "auto",
-                mb: 2,
-                borderRadius: 2,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: { xs: 100, sm: 120, md: 140 },
+                height: { xs: 100, sm: 120, md: 140 },
+                borderRadius: "50%",
+                bgcolor: "background.paper",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                mb: 2,
+                cursor: "pointer",
+                transition: "transform 0.2s, boxShadow 0.2s",
+                p: 2,
+                "&:hover": {
+                  transform: "scale(1.05)",
+                  boxShadow: "0 6px 16px rgba(0,0,0,0.15)",
+                },
               }}
-            />
+            >
+              <Box
+                component="img"
+                src="/aiva_logo1.png"
+                alt="AIVA Logo"
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                }}
+              />
+            </Box>
             <Typography
               variant="h1"
               sx={{

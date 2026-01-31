@@ -142,23 +142,55 @@ export default function Home() {
       </Head>
       <Box sx={{ px: 2, pt: 2, pb: 2 }}>
         <Box
-          component="img"
-          src="/aiva_logo1.png"
-          alt="AIVA Logo"
           sx={{
-            width: { xs: 60, sm: 80 },
-            height: "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
             mb: 2,
-            borderRadius: 2,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            flexWrap: { xs: "wrap", sm: "nowrap" },
           }}
-        />
-        <Typography variant="h1" sx={{ fontSize: "1.5rem", mb: 0.5 }}>
-          Ask for what you need
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Groceries, daily items, or products — we&apos;ve got you.
-        </Typography>
+        >
+          <Box
+            onClick={() => router.push("/")}
+            sx={{
+              width: { xs: 56, sm: 64 },
+              height: { xs: 56, sm: 64 },
+              borderRadius: 3,
+              bgcolor: "background.paper",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              flexShrink: 0,
+              p: 1,
+              cursor: "pointer",
+              transition: "transform 0.2s, boxShadow 0.2s",
+              "&:hover": {
+                transform: "scale(1.05)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              },
+            }}
+          >
+            <Box
+              component="img"
+              src="/aiva_logo1.png"
+              alt="AIVA Logo"
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+              }}
+            />
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="h1" sx={{ fontSize: { xs: "1.25rem", sm: "1.5rem" }, mb: 0.5 }}>
+              Ask for what you need
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Groceries, daily items, or products — we&apos;ve got you.
+            </Typography>
+          </Box>
+        </Box>
 
         <TextField
           fullWidth
