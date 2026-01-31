@@ -5,6 +5,7 @@ from app.database import get_db
 from app.middleware.auth import get_current_user
 from app.services.openai_service import openai_service
 from typing import List, Dict, Optional
+from datetime import datetime, date
 
 router = APIRouter(prefix="/api/chat", tags=["Chat / Assistant"])
 
@@ -166,7 +167,6 @@ async def chat(
                     if existing:
                         existing["quantity"] = existing.get("quantity", 1) + 1
                     else:
-                        from datetime import datetime
                         user_cart.append({"product_id": pid, "quantity": 1, "added_at": datetime.utcnow(), "migrated_to_wishlist": False})
                 await db.users.update_one({"_id": current_user["_id"]}, {"$set": {"cart": user_cart}})
                 added_to_cart = True
@@ -183,6 +183,48 @@ async def chat(
         conversation_history=request.conversation_history or [],
     )
 
+    # Points system: Award 3 points per prompt, max 12 points per day (4 prompts)
+    now = datetime.utcnow()
+    today = now.date()
+    
+    # Get user's current points data
+    user_points = user.get("points", 0)
+    last_prompt_date = user.get("last_prompt_date")
+    daily_prompt_count = user.get("daily_prompt_count", 0)
+    suggested_products_today = user.get("suggested_products_today", [])
+    
+    # Reset daily count if it's a new day
+    if last_prompt_date:
+        last_prompt_date_obj = last_prompt_date.date() if isinstance(last_prompt_date, datetime) else last_prompt_date
+        if last_prompt_date_obj < today:
+            daily_prompt_count = 0
+            suggested_products_today = []
+    
+    # Award points for prompt (max 4 prompts = 12 points per day)
+    points_awarded = 0
+    if daily_prompt_count < 4:
+        points_awarded = 3
+        user_points += points_awarded
+        daily_prompt_count += 1
+    
+    # Track suggested products for today (for purchase bonus)
+    suggested_product_ids = [p.get("_id") for p in display_products if p.get("_id")]
+    for pid in suggested_product_ids:
+        if pid not in suggested_products_today:
+            suggested_products_today.append(pid)
+    
+    # Update user with points and tracking data
+    update_data = {
+        "points": user_points,
+        "daily_prompt_count": daily_prompt_count,
+        "last_prompt_date": now,
+        "suggested_products_today": suggested_products_today[:20]  # Limit to 20 products
+    }
+    await db.users.update_one(
+        {"_id": current_user["_id"]},
+        {"$set": update_data}
+    )
+
     return {
         "success": True,
         "reply": reply,
@@ -193,4 +235,6 @@ async def chat(
         "bundle_offers": bundle_offers,
         "added_to_cart": added_to_cart,
         "added_bundle": added_bundle,
+        "points_awarded": points_awarded,
+        "daily_prompts_remaining": max(0, 4 - daily_prompt_count),
     }

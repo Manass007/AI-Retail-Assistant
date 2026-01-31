@@ -118,6 +118,8 @@ export const gamification = {
     status: () => api("GET", "/api/gamification/daily-checkin/status"),
     claim: () => api("POST", "/api/gamification/daily-checkin"),
   },
+  getPointsInfo: () => api("GET", "/api/gamification/points/info"),
+  updateStreak: () => api("POST", "/api/gamification/points/update-streak"),
 };
 
 export const watchlist = {
