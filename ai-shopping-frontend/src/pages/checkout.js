@@ -21,8 +21,15 @@ import {
   MenuItem,
   Checkbox,
   IconButton,
+  Paper,
+  Container,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import LocalGroceryStoreIcon from "@mui/icons-material/LocalGroceryStore";
+import StoreIcon from "@mui/icons-material/Store";
+import PaymentIcon from "@mui/icons-material/Payment";
+import CreditCardIcon from "@mui/icons-material/CreditCard";
 import { useAuth } from "@/context/AuthContext";
 import { cart as cartApi, orders as ordersApi, stores, addresses as addressesApi } from "@/lib/api";
 
@@ -99,6 +106,11 @@ export default function Checkout() {
           ? storeId || undefined
           : undefined;
       const res = await ordersApi.create(paymentMethod, storeIdForOrder, addressIdForOrder);
+      // Only clear cart for "pay_at_store" orders (payment is complete)
+      // For "online" orders, cart will be cleared after payment succeeds/fails
+      if (paymentMethod === "pay_at_store") {
+        await cartApi.clear();
+      }
       if (paymentMethod === "online") {
         router.push(`/payment?order_id=${res.order_id}&total=${res.total}`);
       } else {
@@ -158,34 +170,165 @@ export default function Checkout() {
   return (
     <>
       <Head>
-        <title>Checkout · AI Shopping Assistant</title>
+        <title>Checkout · AIVA</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <Box sx={{ px: 2, py: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-          <IconButton
-            onClick={() => router.push("/cart")}
-            sx={{ color: "text.primary" }}
-            aria-label="Back to cart"
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "#F5F5F5",
+          backgroundImage: `
+            linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px)
+          `,
+          backgroundSize: "30px 30px",
+          position: "relative",
+          overflow: "hidden",
+          p: 2,
+        }}
+      >
+        {/* Floating Icons */}
+        <ShoppingCartIcon
+          sx={{
+            position: "absolute",
+            top: { xs: "8%", md: "10%" },
+            left: { xs: "5%", md: "8%" },
+            fontSize: { xs: 40, md: 60 },
+            opacity: 0.2,
+            color: "text.secondary",
+            zIndex: 0,
+            display: { xs: "none", sm: "block" },
+            animation: "float 6s ease-in-out infinite",
+            "@keyframes float": {
+              "0%, 100%": { transform: "translateY(0px)" },
+              "50%": { transform: "translateY(-10px)" },
+            },
+          }}
+        />
+        <LocalGroceryStoreIcon
+          sx={{
+            position: "absolute",
+            top: { xs: "6%", md: "8%" },
+            right: { xs: "5%", md: "10%" },
+            fontSize: { xs: 35, md: 55 },
+            opacity: 0.25,
+            color: "text.secondary",
+            zIndex: 0,
+            display: { xs: "none", sm: "block" },
+            animation: "float 8s ease-in-out infinite",
+            "@keyframes float": {
+              "0%, 100%": { transform: "translateY(0px)" },
+              "50%": { transform: "translateY(-15px)" },
+            },
+          }}
+        />
+        <PaymentIcon
+          sx={{
+            position: "absolute",
+            bottom: { xs: "15%", md: "20%" },
+            left: { xs: "8%", md: "12%" },
+            fontSize: { xs: 30, md: 50 },
+            opacity: 0.2,
+            color: "text.secondary",
+            zIndex: 0,
+            display: { xs: "none", md: "block" },
+            animation: "float 7s ease-in-out infinite",
+            "@keyframes float": {
+              "0%, 100%": { transform: "translateY(0px)" },
+              "50%": { transform: "translateY(-12px)" },
+            },
+          }}
+        />
+        <CreditCardIcon
+          sx={{
+            position: "absolute",
+            bottom: { xs: "12%", md: "18%" },
+            right: { xs: "8%", md: "10%" },
+            fontSize: { xs: 40, md: 60 },
+            opacity: 0.2,
+            color: "text.secondary",
+            zIndex: 0,
+            display: { xs: "none", sm: "block" },
+            animation: "float 9s ease-in-out infinite",
+            "@keyframes float": {
+              "0%, 100%": { transform: "translateY(0px)" },
+              "50%": { transform: "translateY(-8px)" },
+            },
+          }}
+        />
+        <StoreIcon
+          sx={{
+            position: "absolute",
+            top: { xs: "50%", md: "45%" },
+            left: { xs: "3%", md: "5%" },
+            fontSize: { xs: 25, md: 45 },
+            opacity: 0.15,
+            color: "text.secondary",
+            zIndex: 0,
+            display: { xs: "none", lg: "block" },
+            animation: "float 10s ease-in-out infinite",
+            "@keyframes float": {
+              "0%, 100%": { transform: "translateY(0px)" },
+              "50%": { transform: "translateY(-10px)" },
+            },
+          }}
+        />
+
+        <Container maxWidth="md" sx={{ position: "relative", zIndex: 1 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 3, sm: 4 },
+              borderRadius: 3,
+              bgcolor: "background.paper",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+              mb: 2,
+            }}
           >
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h1" sx={{ fontSize: "1.5rem" }}>
-            Checkout
-          </Typography>
-        </Box>
-        <Typography variant="body1" sx={{ mb: 2 }}>
-          Total: ${Number(total).toFixed(2)}
-        </Typography>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
-            {error}
-          </Alert>
-        )}
-        <FormControl component="fieldset" sx={{ mb: 2, width: "100%" }}>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Payment
-          </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
+              <IconButton
+                onClick={() => router.push("/cart")}
+                sx={{
+                  color: "text.primary",
+                  bgcolor: "rgba(0,0,0,0.04)",
+                  "&:hover": { bgcolor: "rgba(0,0,0,0.08)" },
+                }}
+                aria-label="Back to cart"
+              >
+                <ArrowBackIcon />
+              </IconButton>
+              <Typography variant="h1" sx={{ fontSize: { xs: "1.75rem", sm: "2rem" }, fontWeight: 700 }}>
+                Checkout
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                p: 2,
+                bgcolor: "primary.main",
+                color: "primary.contrastText",
+                borderRadius: 2,
+                mb: 3,
+              }}
+            >
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Order Total
+              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                ${Number(total).toFixed(2)}
+              </Typography>
+            </Box>
+            {error && (
+              <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError("")}>
+                {error}
+              </Alert>
+            )}
+            <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                Payment Method
+              </Typography>
           <RadioGroup
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
@@ -198,11 +341,11 @@ export default function Checkout() {
             <FormControlLabel value="online" control={<Radio />} label="Pay online" />
           </RadioGroup>
         </FormControl>
-        {paymentMethod === "pay_at_store" && pickupStores.length > 0 && (
-          <FormControl component="fieldset" sx={{ mb: 2, width: "100%" }}>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-              Pickup store
-            </Typography>
+            {paymentMethod === "pay_at_store" && pickupStores.length > 0 && (
+              <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                  Pickup Store
+                </Typography>
             <RadioGroup value={storeId} onChange={(e) => setStoreId(e.target.value)}>
               {pickupStores.map((s) => (
                 <FormControlLabel
@@ -215,12 +358,12 @@ export default function Checkout() {
             </RadioGroup>
           </FormControl>
         )}
-        {paymentMethod === "online" && (
-          <>
-            <FormControl component="fieldset" sx={{ mb: 2, width: "100%" }}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Fulfillment
-              </Typography>
+            {paymentMethod === "online" && (
+              <>
+                <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                    Fulfillment Option
+                  </Typography>
               <RadioGroup
                 value={deliveryType}
                 onChange={(e) => setDeliveryType(e.target.value)}
@@ -237,11 +380,11 @@ export default function Checkout() {
                 />
               </RadioGroup>
             </FormControl>
-            {deliveryType === "pickup" && pickupStores.length > 0 && (
-              <FormControl component="fieldset" sx={{ mb: 2, width: "100%" }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  Pickup store
-                </Typography>
+                {deliveryType === "pickup" && pickupStores.length > 0 && (
+                  <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                      Pickup Store
+                    </Typography>
                 <RadioGroup value={storeId} onChange={(e) => setStoreId(e.target.value)}>
                   {pickupStores.map((s) => (
                     <FormControlLabel
@@ -254,11 +397,11 @@ export default function Checkout() {
                 </RadioGroup>
               </FormControl>
             )}
-            {deliveryType === "delivery" && (
-              <FormControl sx={{ mb: 2, width: "100%" }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  Delivery address
-                </Typography>
+                {deliveryType === "delivery" && (
+                  <FormControl sx={{ mb: 3, width: "100%" }}>
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                      Delivery Address
+                    </Typography>
                 {savedAddresses.length > 0 ? (
                   <>
                     <RadioGroup
@@ -345,18 +488,27 @@ export default function Checkout() {
                 )}
               </FormControl>
             )}
-          </>
-        )}
-        <Button
-          fullWidth
-          variant="contained"
-          size="large"
-          disabled={submitting}
-          onClick={handlePlaceOrder}
-          sx={{ borderRadius: 2, py: 1.5 }}
-        >
-          {submitting ? <CircularProgress size={24} /> : "Place order"}
-        </Button>
+              </>
+            )}
+            <Button
+              fullWidth
+              variant="contained"
+              size="large"
+              disabled={submitting}
+              onClick={handlePlaceOrder}
+              sx={{
+                borderRadius: 2,
+                py: 1.5,
+                textTransform: "none",
+                fontSize: "1rem",
+                fontWeight: 600,
+                mt: 2,
+              }}
+            >
+              {submitting ? <CircularProgress size={24} color="inherit" /> : "Place Order"}
+            </Button>
+          </Paper>
+        </Container>
 
         <Dialog open={addressDialogOpen} onClose={() => setAddressDialogOpen(false)} maxWidth="sm" fullWidth>
           <DialogTitle>Add New Address</DialogTitle>

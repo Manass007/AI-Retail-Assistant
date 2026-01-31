@@ -2,9 +2,13 @@ import Head from "next/head";
 import Script from "next/script";
 import { useRouter } from "next/router";
 import { useState, useEffect, useRef } from "react";
-import { Box, Typography, Button, CircularProgress, Alert } from "@mui/material";
+import { Box, Typography, Button, CircularProgress, Alert, Paper, Container } from "@mui/material";
+import PaymentIcon from "@mui/icons-material/Payment";
+import CreditCardIcon from "@mui/icons-material/CreditCard";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useAuth } from "@/context/AuthContext";
-import { payments as paymentsApi } from "@/lib/api";
+import { payments as paymentsApi, cart as cartApi } from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -71,6 +75,12 @@ export default function Payment() {
           if (data?.earned_coupon && typeof sessionStorage !== "undefined") {
             sessionStorage.setItem("earnedCoupon", JSON.stringify(data.earned_coupon));
           }
+          // Clear cart on successful payment
+          try {
+            await cartApi.clear();
+          } catch (cartError) {
+            console.error("Failed to clear cart:", cartError);
+          }
           router.push("/profile?payment=success");
         } catch (e) {
           setError(e.message || "Payment verification failed.");
@@ -92,9 +102,15 @@ export default function Payment() {
       },
     };
     const rzp = new window.Razorpay(options);
-    rzp.on("payment.failed", () => {
+    rzp.on("payment.failed", async () => {
       setError("Payment failed or was cancelled.");
       setPaying(false);
+      // Clear cart on payment failure (order was created but payment failed)
+      try {
+        await cartApi.clear();
+      } catch (cartError) {
+        console.error("Failed to clear cart:", cartError);
+      }
     });
     rzp.open();
   };
@@ -111,7 +127,7 @@ export default function Payment() {
   return (
     <>
       <Head>
-        <title>Payment · AI Shopping Assistant</title>
+        <title>Payment · AIVA</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Script
@@ -121,43 +137,206 @@ export default function Payment() {
           razorpayLoaded.current = true;
         }}
       />
-      <Box sx={{ px: 2, py: 4 }}>
-        <Typography variant="h1" sx={{ fontSize: "1.5rem", mb: 2 }}>
-          Complete payment
-        </Typography>
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <>
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-            <Button variant="contained" onClick={() => router.push("/profile")} sx={{ borderRadius: 2 }}>
-              Back to profile
-            </Button>
-          </>
-        ) : (
-          <>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Order total: ${Number(total).toFixed(2)}
-            </Typography>
-            <Button
-              variant="contained"
-              fullWidth
-              size="large"
-              disabled={paying}
-              onClick={openRazorpayCheckout}
-              sx={{ mt: 2, borderRadius: 2, py: 1.5 }}
-            >
-              {paying ? <CircularProgress size={24} color="inherit" /> : "Pay with Razorpay"}
-            </Button>
-            <Button variant="text" fullWidth sx={{ mt: 1 }} onClick={() => router.push("/profile")}>
-              Back to profile
-            </Button>
-          </>
-        )}
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          bgcolor: "#F5F5F5",
+          backgroundImage: `
+            linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px)
+          `,
+          backgroundSize: "30px 30px",
+          position: "relative",
+          overflow: "hidden",
+          p: 2,
+        }}
+      >
+        {/* Floating Icons */}
+        <PaymentIcon
+          sx={{
+            position: "absolute",
+            top: { xs: "10%", md: "15%" },
+            left: { xs: "5%", md: "10%" },
+            fontSize: { xs: 40, md: 60 },
+            opacity: 0.2,
+            color: "text.secondary",
+            zIndex: 0,
+            display: { xs: "none", sm: "block" },
+            animation: "float 6s ease-in-out infinite",
+            "@keyframes float": {
+              "0%, 100%": { transform: "translateY(0px)" },
+              "50%": { transform: "translateY(-10px)" },
+            },
+          }}
+        />
+        <CreditCardIcon
+          sx={{
+            position: "absolute",
+            top: { xs: "8%", md: "12%" },
+            right: { xs: "5%", md: "12%" },
+            fontSize: { xs: 35, md: 55 },
+            opacity: 0.25,
+            color: "text.secondary",
+            zIndex: 0,
+            display: { xs: "none", sm: "block" },
+            animation: "float 8s ease-in-out infinite",
+            "@keyframes float": {
+              "0%, 100%": { transform: "translateY(0px)" },
+              "50%": { transform: "translateY(-15px)" },
+            },
+          }}
+        />
+        <AccountBalanceWalletIcon
+          sx={{
+            position: "absolute",
+            bottom: { xs: "15%", md: "20%" },
+            left: { xs: "8%", md: "15%" },
+            fontSize: { xs: 30, md: 50 },
+            opacity: 0.2,
+            color: "text.secondary",
+            zIndex: 0,
+            display: { xs: "none", md: "block" },
+            animation: "float 7s ease-in-out infinite",
+            "@keyframes float": {
+              "0%, 100%": { transform: "translateY(0px)" },
+              "50%": { transform: "translateY(-12px)" },
+            },
+          }}
+        />
+        <ShoppingCartIcon
+          sx={{
+            position: "absolute",
+            bottom: { xs: "12%", md: "18%" },
+            right: { xs: "8%", md: "10%" },
+            fontSize: { xs: 40, md: 60 },
+            opacity: 0.2,
+            color: "text.secondary",
+            zIndex: 0,
+            display: { xs: "none", sm: "block" },
+            animation: "float 9s ease-in-out infinite",
+            "@keyframes float": {
+              "0%, 100%": { transform: "translateY(0px)" },
+              "50%": { transform: "translateY(-8px)" },
+            },
+          }}
+        />
+
+        <Container maxWidth="sm" sx={{ position: "relative", zIndex: 1 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 3, sm: 4 },
+              borderRadius: 3,
+              bgcolor: "background.paper",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+            }}
+          >
+            <Box sx={{ textAlign: "center", mb: 4 }}>
+              <Typography
+                variant="h1"
+                sx={{
+                  fontSize: { xs: "2rem", sm: "2.5rem" },
+                  fontWeight: 700,
+                  mb: 1,
+                  color: "text.primary",
+                }}
+              >
+                Complete Payment
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Secure payment powered by Razorpay
+              </Typography>
+            </Box>
+
+            {loading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : error ? (
+              <>
+                <Alert severity="error" sx={{ mb: 3 }}>
+                  {error}
+                </Alert>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={() => router.push("/")}
+                  sx={{ borderRadius: 2, py: 1.5, textTransform: "none", fontSize: "1rem", fontWeight: 600 }}
+                >
+                  Go to Home
+                </Button>
+              </>
+            ) : (
+              <>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    p: 2,
+                    bgcolor: "primary.main",
+                    color: "primary.contrastText",
+                    borderRadius: 2,
+                    mb: 3,
+                  }}
+                >
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Order Total
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    ${Number(total).toFixed(2)}
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  disabled={paying}
+                  onClick={openRazorpayCheckout}
+                  sx={{
+                    borderRadius: 2,
+                    py: 1.5,
+                    textTransform: "none",
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                    mb: 1.5,
+                  }}
+                >
+                  {paying ? <CircularProgress size={24} color="inherit" /> : "Pay with Razorpay"}
+                </Button>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={() => router.push("/")}
+                  sx={{
+                    borderRadius: 2,
+                    py: 1.5,
+                    textTransform: "none",
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                    mb: 1.5,
+                  }}
+                >
+                  Cancel Payment
+                </Button>
+                <Button
+                  variant="text"
+                  fullWidth
+                  onClick={() => router.push("/profile")}
+                  sx={{
+                    textTransform: "none",
+                    color: "text.secondary",
+                  }}
+                >
+                  Back to Profile
+                </Button>
+              </>
+            )}
+          </Paper>
+        </Container>
       </Box>
     </>
   );
