@@ -88,6 +88,7 @@ export default function Login() {
       <Head>
         <title>Login · AIVA</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/aiva_logo1.png" />
       </Head>
       <Box
         sx={{
@@ -242,6 +243,18 @@ export default function Login() {
 
         <Container maxWidth="sm" sx={{ position: "relative", zIndex: 1 }}>
           <Box sx={{ textAlign: "center", mb: 4 }}>
+            <Box
+              component="img"
+              src="/aiva_logo1.png"
+              alt="AIVA Logo"
+              sx={{
+                width: { xs: 80, sm: 100, md: 120 },
+                height: "auto",
+                mb: 2,
+                borderRadius: 2,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              }}
+            />
             <Typography
               variant="h1"
               sx={{

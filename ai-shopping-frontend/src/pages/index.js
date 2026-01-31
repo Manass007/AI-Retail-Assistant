@@ -136,10 +136,23 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>AI Shopping Assistant</title>
+        <title>AIVA - Your Personal AI Shopping Assistant</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/aiva_logo1.png" />
       </Head>
       <Box sx={{ px: 2, pt: 2, pb: 2 }}>
+        <Box
+          component="img"
+          src="/aiva_logo1.png"
+          alt="AIVA Logo"
+          sx={{
+            width: { xs: 60, sm: 80 },
+            height: "auto",
+            mb: 2,
+            borderRadius: 2,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          }}
+        />
         <Typography variant="h1" sx={{ fontSize: "1.5rem", mb: 0.5 }}>
           Ask for what you need
         </Typography>

@@ -110,7 +110,8 @@ export default function Products() {
   return (
     <>
       <Head>
-        <title>Products · AI Shopping Assistant</title>
+        <title>Products · AIVA</title>
+        <link rel="icon" href="/aiva_logo1.png" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Box sx={{ px: 2, py: 2 }}>

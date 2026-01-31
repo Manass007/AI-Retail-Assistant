@@ -172,6 +172,7 @@ export default function Checkout() {
       <Head>
         <title>Checkout · AIVA</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/aiva_logo1.png" />
       </Head>
       <Box
         sx={{
@@ -285,7 +286,7 @@ export default function Checkout() {
               mb: 2,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
               <IconButton
                 onClick={() => router.push("/cart")}
                 sx={{
@@ -297,6 +298,16 @@ export default function Checkout() {
               >
                 <ArrowBackIcon />
               </IconButton>
+              <Box
+                component="img"
+                src="/aiva_logo1.png"
+                alt="AIVA Logo"
+                sx={{
+                  width: { xs: 40, sm: 50 },
+                  height: "auto",
+                  borderRadius: 1,
+                }}
+              />
               <Typography variant="h1" sx={{ fontSize: { xs: "1.75rem", sm: "2rem" }, fontWeight: 700 }}>
                 Checkout
               </Typography>

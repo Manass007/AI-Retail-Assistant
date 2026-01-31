@@ -305,8 +305,9 @@ export default function Profile() {
   return (
     <>
       <Head>
-        <title>Profile · AI Shopping Assistant</title>
+        <title>Profile · AIVA</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/aiva_logo1.png" />
       </Head>
       <Box sx={{ px: 2, py: 2 }}>
         <Typography variant="h1" sx={{ fontSize: "1.5rem", mb: 2 }}>
