@@ -20,7 +20,9 @@ import {
   Select,
   MenuItem,
   Checkbox,
+  IconButton,
 } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useAuth } from "@/context/AuthContext";
 import { cart as cartApi, orders as ordersApi, stores, addresses as addressesApi } from "@/lib/api";
 
@@ -160,9 +162,18 @@ export default function Checkout() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Box sx={{ px: 2, py: 2 }}>
-        <Typography variant="h1" sx={{ fontSize: "1.5rem", mb: 2 }}>
-          Checkout
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+          <IconButton
+            onClick={() => router.push("/cart")}
+            sx={{ color: "text.primary" }}
+            aria-label="Back to cart"
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h1" sx={{ fontSize: "1.5rem" }}>
+            Checkout
+          </Typography>
+        </Box>
         <Typography variant="body1" sx={{ mb: 2 }}>
           Total: ${Number(total).toFixed(2)}
         </Typography>
