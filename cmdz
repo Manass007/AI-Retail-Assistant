@@ -1,8 +1,7 @@
 
 
 pip install -r requirements.txt
-
-python seed_data.py
+![1769852838278](image/cmdz/1769852838278.png)
 cd AI-Retail-Assistant/ai-shopping-backend
 venv\Scripts\activate
 uvicorn app.main:app --reload --port 5000
