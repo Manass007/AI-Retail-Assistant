@@ -2,12 +2,12 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import { Box, Typography, Card, CardContent, CardMedia, Button, CircularProgress } from "@mui/material";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { bundles as bundlesApi, cart as cartApi } from "@/lib/api";
 
 export default function Bundles() {
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +25,7 @@ export default function Bundles() {
   }, []);
 
   const handleAddBundle = async (bundle) => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       router.push("/login");
       return;
     }

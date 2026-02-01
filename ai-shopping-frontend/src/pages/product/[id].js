@@ -12,14 +12,14 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { products as productsApi, cart as cartApi, bundles, watchlist } from "@/lib/api";
 import WatchlistComboCard from "@/components/watchlist/WatchlistComboCard";
 
 export default function ProductDetail() {
   const router = useRouter();
   const { id } = router.query;
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [product, setProduct] = useState(null);
   const [bundleOffers, setBundleOffers] = useState([]);
   const [comboSuggestions, setComboSuggestions] = useState([]);
@@ -34,7 +34,7 @@ export default function ProductDetail() {
         const [prodRes, bundleRes, comboRes] = await Promise.all([
           productsApi.get(id),
           bundles.forProduct(id).catch(() => ({ bundles: [] })),
-          isLoggedIn ? watchlist.comboSuggestions(id).catch(() => ({ suggestions: [] })) : Promise.resolve({ suggestions: [] }),
+          isAuthenticated ? watchlist.comboSuggestions(id).catch(() => ({ suggestions: [] })) : Promise.resolve({ suggestions: [] }),
         ]);
         setProduct(prodRes?.product || null);
         setBundleOffers(bundleRes?.bundles || []);
@@ -45,10 +45,10 @@ export default function ProductDetail() {
         setLoading(false);
       }
     })();
-  }, [id, isLoggedIn]);
+  }, [id, isAuthenticated]);
 
   const handleAddToCart = async () => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       router.push("/login");
       return;
     }
@@ -199,7 +199,7 @@ export default function ProductDetail() {
                     suggestion={suggestion}
                     onAddToCart={() => {
                       // Refresh suggestions after adding to cart
-                      if (isLoggedIn && id) {
+                      if (isAuthenticated && id) {
                         watchlist.comboSuggestions(id)
                           .then((res) => setComboSuggestions(res?.suggestions || []))
                           .catch(() => {});

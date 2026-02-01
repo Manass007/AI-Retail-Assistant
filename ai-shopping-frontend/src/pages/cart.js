@@ -16,7 +16,7 @@ import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useSnackbar } from "@/context/SnackbarContext";
 import { cart as cartApi, recommendations, watchlist } from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
@@ -25,7 +25,7 @@ import Tooltip from "@mui/material/Tooltip";
 
 export default function Cart() {
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { showSnackbar } = useSnackbar();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,19 +36,19 @@ export default function Cart() {
   const [comboSuggestions, setComboSuggestions] = useState([]);
 
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       router.replace("/login");
       return;
     }
     fetchCart();
-  }, [isLoggedIn, router]);
+  }, [isAuthenticated, router]);
 
   useEffect(() => {
     (async () => {
       try {
         const [recRes, comboRes] = await Promise.all([
           recommendations.list(6).catch(() => ({ products: [] })),
-          isLoggedIn ? watchlist.comboSuggestionsCart().catch(() => ({ suggestions: [] })) : Promise.resolve({ suggestions: [] }),
+          isAuthenticated ? watchlist.comboSuggestionsCart().catch(() => ({ suggestions: [] })) : Promise.resolve({ suggestions: [] }),
         ]);
         setRecommended(recRes?.products || []);
         setComboSuggestions(comboRes?.suggestions || []);
@@ -57,7 +57,7 @@ export default function Cart() {
         setComboSuggestions([]);
       }
     })();
-  }, [isLoggedIn, data]);
+  }, [isAuthenticated, data]);
 
   const fetchCart = async () => {
     try {
@@ -92,7 +92,7 @@ export default function Cart() {
     }
   };
 
-  if (!isLoggedIn) return null;
+  if (!isAuthenticated) return null;
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@mui/material/styles";
 import { Box, Typography, TextField, InputAdornment, CircularProgress } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useSnackbar } from "@/context/SnackbarContext";
 import { products as productsApi, cart as cartApi } from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
@@ -26,7 +26,7 @@ export default function Products() {
   const router = useRouter();
   const theme = useTheme();
   const { category: qCategory, search: qSearch } = router.query;
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { showSnackbar } = useSnackbar();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,19 +35,19 @@ export default function Products() {
   const [cartData, setCartData] = useState(null);
 
   const fetchCart = useCallback(async () => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     try {
       const res = await cartApi.get();
       setCartData(res);
     } catch {
       setCartData(null);
     }
-  }, [isLoggedIn]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     fetchCart();
-  }, [isLoggedIn, fetchCart]);
+  }, [isAuthenticated, fetchCart]);
 
   useEffect(() => {
     (async () => {
@@ -67,7 +67,7 @@ export default function Products() {
   }, [category, qSearch]);
 
   const handleAddToCart = async (productId) => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       router.push("/login");
       return;
     }
@@ -82,7 +82,7 @@ export default function Products() {
   };
 
   const handleQuantityChange = async (productId, newQty) => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     try {
       if (newQty === 0) {
         await cartApi.remove(productId);

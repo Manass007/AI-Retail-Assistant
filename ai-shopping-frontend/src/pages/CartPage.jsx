@@ -1,14 +1,14 @@
 import { Container, Grid, Box, Typography, Button } from '@mui/material';
 import { ShoppingCart } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { useCart } from '../contexts/CartContext';
 import CartItem from '../components/cart/CartItem';
 import CartSummary from '../components/cart/CartSummary';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const CartPage = () => {
+  const router = useRouter();
   const { cartItems, cartCount, totalAmount, loading } = useCart();
-  const navigate = useNavigate();
 
   if (loading) {
     return <LoadingSpinner fullScreen />;
@@ -27,7 +27,7 @@ const CartPage = () => {
         <Button
           variant="contained"
           size="large"
-          onClick={() => navigate('/products')}
+          onClick={() => router.push('/products')}
         >
           Browse Products
         </Button>

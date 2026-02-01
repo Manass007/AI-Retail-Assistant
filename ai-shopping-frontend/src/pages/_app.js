@@ -3,7 +3,8 @@ import { useRouter } from "next/router";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import theme from "@/styles/theme";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { CartProvider } from "@/contexts/CartContext";
 import { SnackbarProvider } from "@/context/SnackbarContext";
 import Layout from "@/components/Layout";
 
@@ -15,6 +16,7 @@ export default function App({ Component, pageProps }) {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
+        <CartProvider>
         <SnackbarProvider>
           {noLayout ? (
             <Component {...pageProps} />
@@ -24,6 +26,7 @@ export default function App({ Component, pageProps }) {
             </Layout>
           )}
         </SnackbarProvider>
+        </CartProvider>
       </AuthProvider>
     </ThemeProvider>
   );

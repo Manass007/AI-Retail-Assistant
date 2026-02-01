@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { AppBar, Toolbar, Typography, Button, IconButton, Badge, Box } from '@mui/material';
 import { ShoppingCart, AccountCircle, Logout, Casino } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import SpinWheel from '../gamification/SpinWheel';
 
 const Header = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { isAuthenticated, user, logout } = useAuth();
   const { cartCount } = useCart();
   const [spinWheelOpen, setSpinWheelOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    router.push('/login');
   };
 
   return (
@@ -33,7 +33,7 @@ const Header = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Button
               color="inherit"
-              onClick={() => navigate('/products')}
+              onClick={() => router.push('/products')}
               sx={{ textTransform: 'none' }}
             >
               Products
@@ -47,7 +47,7 @@ const Header = () => {
             </IconButton>
             <IconButton
               color="inherit"
-              onClick={() => navigate('/cart')}
+              onClick={() => router.push('/cart')}
             >
               <Badge badgeContent={cartCount} color="primary">
                 <ShoppingCart />
@@ -71,7 +71,7 @@ const Header = () => {
         ) : (
           <Button
             color="inherit"
-            onClick={() => navigate('/login')}
+            onClick={() => router.push('/login')}
             sx={{ textTransform: 'none' }}
           >
             Login

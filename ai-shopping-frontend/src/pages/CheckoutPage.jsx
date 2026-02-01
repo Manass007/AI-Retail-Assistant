@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Container, Grid, Box, Typography, TextField, Button, Paper } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { toast } from 'react-toastify';
 import { useCart } from '../contexts/CartContext';
 import { PAYMENT_OPTIONS } from '../utils/constants';
@@ -14,7 +14,7 @@ const CheckoutPage = () => {
   const [discount, setDiscount] = useState(0);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const { cartCount, clearCart } = useCart();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -62,7 +62,7 @@ const CheckoutPage = () => {
         </Typography>
         <Button
           variant="contained"
-          onClick={() => navigate('/products')}
+          onClick={() => router.push('/products')}
           sx={{ mt: 2 }}
         >
           Browse Products

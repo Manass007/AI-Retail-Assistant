@@ -1,9 +1,9 @@
 import { Box, Typography, Button, Container } from '@mui/material';
 import { Home, ArrowBack } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 
 const NotFoundPage = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <Container maxWidth="sm">
@@ -31,14 +31,14 @@ const NotFoundPage = () => {
           <Button
             variant="outlined"
             startIcon={<ArrowBack />}
-            onClick={() => navigate(-1)}
+            onClick={() => router.back()}
           >
             Go Back
           </Button>
           <Button
             variant="contained"
             startIcon={<Home />}
-            onClick={() => navigate('/')}
+            onClick={() => router.push('/')}
           >
             Go Home
           </Button>

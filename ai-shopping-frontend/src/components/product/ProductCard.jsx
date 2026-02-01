@@ -1,13 +1,13 @@
 import { Card, CardMedia, CardContent, CardActions, Typography, Button, Chip, Box } from '@mui/material';
 import { ShoppingCart } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { formatPrice } from '../../utils/formatters';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 
 const ProductCard = ({ product }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
 
@@ -27,7 +27,7 @@ const ProductCard = ({ product }) => {
   };
 
   const handleCardClick = () => {
-    navigate(`/products/${product._id || product.id}`);
+    router.push(`/product/${product._id || product.id}`);
   };
 
   return (

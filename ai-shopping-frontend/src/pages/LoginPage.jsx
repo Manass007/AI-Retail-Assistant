@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Container, Box, Paper, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { toast } from 'react-toastify';
 import OTPForm from '../components/auth/OTPForm';
 import { authAPI } from '../api/auth';
@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
   const { login } = useAuth();
 
   const handleSendOTP = async (email) => {
@@ -32,12 +32,12 @@ const LoginPage = () => {
       
       if (response.isNewUser) {
         // New user - redirect to onboarding
-        navigate('/onboarding', { state: { email } });
+        router.push(`/OnboardingPage?email=${encodeURIComponent(email)}`);
       } else {
         // Existing user - login
         login(response.token, response.user);
         toast.success('Login successful!');
-        navigate('/');
+        router.replace('/');
       }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Invalid OTP');

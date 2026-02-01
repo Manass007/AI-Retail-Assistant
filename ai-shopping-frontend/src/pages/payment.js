@@ -7,7 +7,7 @@ import PaymentIcon from "@mui/icons-material/Payment";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { payments as paymentsApi, cart as cartApi } from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -15,7 +15,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 export default function Payment() {
   const router = useRouter();
   const { order_id, total } = router.query;
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [razorpayOrderId, setRazorpayOrderId] = useState("");
@@ -24,7 +24,7 @@ export default function Payment() {
   const razorpayLoaded = useRef(false);
 
   useEffect(() => {
-    if (!isLoggedIn) router.replace("/login");
+    if (!isAuthenticated) router.replace("/login");
     if (!order_id || !total) return;
     (async () => {
       setLoading(true);
@@ -48,7 +48,7 @@ export default function Payment() {
         setLoading(false);
       }
     })();
-  }, [isLoggedIn, order_id, total]);
+  }, [isAuthenticated, order_id, total]);
 
   const openRazorpayCheckout = () => {
     if (!window.Razorpay || !keyId || !razorpayOrderId || !order_id) return;
@@ -122,7 +122,7 @@ export default function Payment() {
     }
   }, [loading, error, razorpayOrderId, keyId, paying]);
 
-  if (!isLoggedIn) return null;
+  if (!isAuthenticated) return null;
 
   return (
     <>

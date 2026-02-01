@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { Box, Typography, TextField, InputAdornment, Button, Card, CardContent } from "@mui/material";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useSnackbar } from "@/context/SnackbarContext";
 import { useEffect, useState, useCallback } from "react";
 import { products as productsApi, recommendations, offers, cart as cartApi, orders as ordersApi } from "@/lib/api";
@@ -24,7 +24,7 @@ const CATEGORIES = [
 
 export default function Home() {
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { showSnackbar } = useSnackbar();
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,14 +36,14 @@ export default function Home() {
   const [frequentlyOrdered, setFrequentlyOrdered] = useState([]);
 
   const fetchCart = useCallback(async () => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     try {
       const res = await cartApi.get();
       setCartData(res);
     } catch {
       setCartData(null);
     }
-  }, [isLoggedIn]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     (async () => {
@@ -60,12 +60,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     fetchCart();
-  }, [isLoggedIn, fetchCart]);
+  }, [isAuthenticated, fetchCart]);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     (async () => {
       try {
         const data = await offers.list();
@@ -76,10 +76,10 @@ export default function Home() {
         setEarnedCoupons([]);
       }
     })();
-  }, [isLoggedIn]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     (async () => {
       try {
         const data = await ordersApi.history();
@@ -90,10 +90,10 @@ export default function Home() {
         setFrequentlyOrdered([]);
       }
     })();
-  }, [isLoggedIn]);
+  }, [isAuthenticated]);
 
   const handleAddToCart = async (productId) => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       router.push("/login");
       return;
     }
@@ -108,7 +108,7 @@ export default function Home() {
   };
 
   const handleQuantityChange = async (productId, newQty) => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     try {
       if (newQty === 0) {
         await cartApi.remove(productId);
@@ -223,9 +223,9 @@ export default function Home() {
           Browse all products
         </Button>
 
-        {isLoggedIn && <DailyCheckIn />}
+        {isAuthenticated && <DailyCheckIn />}
 
-        {isLoggedIn && (offersList.length > 0 || earnedCoupons.length > 0) && (
+        {isAuthenticated && (offersList.length > 0 || earnedCoupons.length > 0) && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle2" sx={{ mb: 1, display: "flex", alignItems: "center", gap: 0.5 }}>
               <LocalOfferIcon fontSize="small" /> Offers & discounts
@@ -246,7 +246,7 @@ export default function Home() {
           </Box>
         )}
 
-        {isLoggedIn && (lastOrdered.length > 0 || frequentlyOrdered.length > 0) && (
+        {isAuthenticated && (lastOrdered.length > 0 || frequentlyOrdered.length > 0) && (
           <Box sx={{ mb: 2 }}>
             {lastOrdered.length > 0 && (
               <Box sx={{ mb: 1.5 }}>

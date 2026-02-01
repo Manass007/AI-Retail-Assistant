@@ -18,12 +18,12 @@ import StoreIcon from "@mui/icons-material/Store";
 import CategoryIcon from "@mui/icons-material/Category";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { auth as authApi } from "@/lib/api";
 
 export default function Login() {
   const router = useRouter();
-  const { login, register, isLoggedIn } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const [step, setStep] = useState("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -33,8 +33,8 @@ export default function Login() {
   const [needsRegister, setNeedsRegister] = useState(false);
 
   useEffect(() => {
-    if (isLoggedIn) router.replace("/");
-  }, [isLoggedIn, router]);
+    if (isAuthenticated) router.replace("/");
+  }, [isAuthenticated, router]);
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
@@ -74,8 +74,11 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await register({ email, name, phone: "", preferences: { categories: [], budget: "mid" } });
-      router.replace("/");
+      const result = await authApi.register({ email, name, phone: "", preferences: { categories: [], budget: "mid" } });
+      if (result.token) {
+        login(result.token, result.user);
+        router.replace("/");
+      }
     } catch (e) {
       setError(e.message || "Registration failed");
     } finally {

@@ -1,9 +1,9 @@
 import { Paper, Box, Typography, Divider, Button } from '@mui/material';
 import { formatPrice } from '../../utils/formatters';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 
 const CartSummary = ({ totalAmount, cartCount }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <Paper elevation={2} sx={{ p: 3, position: 'sticky', top: 20 }}>
@@ -39,7 +39,7 @@ const CartSummary = ({ totalAmount, cartCount }) => {
         variant="contained"
         fullWidth
         size="large"
-        onClick={() => navigate('/checkout')}
+        onClick={() => router.push('/checkout')}
         disabled={cartCount === 0}
       >
         Proceed to Checkout

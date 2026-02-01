@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { chat as chatApi, cart as cartApi, orders as ordersApi } from "@/lib/api";
 import ChatMessage from "@/components/ChatMessage";
 import { QuickAddChips, QuickAddProductCards } from "@/components/QuickAddChips";
@@ -26,7 +26,7 @@ const QUICK_PROMPTS = [
 
 export default function Chat() {
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,14 +39,14 @@ export default function Chat() {
   const bottomRef = useRef(null);
 
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       router.replace("/login");
       return;
     }
-  }, [isLoggedIn, router]);
+  }, [isAuthenticated, router]);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     (async () => {
       try {
         const data = await ordersApi.history();
@@ -57,7 +57,7 @@ export default function Chat() {
         setFrequentlyOrdered([]);
       }
     })();
-  }, [isLoggedIn]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -101,7 +101,7 @@ export default function Chat() {
     } catch {}
   };
 
-  if (!isLoggedIn) return null;
+  if (!isAuthenticated) return null;
 
   return (
     <>

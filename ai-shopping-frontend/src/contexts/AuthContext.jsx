@@ -5,11 +5,17 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Sync token from localStorage only on client after mount (avoids hydration mismatch)
   useEffect(() => {
-    // Check if user is logged in on mount
+    const stored = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (stored) setToken(stored);
+    else setLoading(false);
+  }, []);
+
+  useEffect(() => {
     if (token) {
       fetchUser();
     } else {

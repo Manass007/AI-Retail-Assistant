@@ -4,18 +4,18 @@ import { Notifications } from '@mui/icons-material';
 import { productsAPI } from '../../api/products';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 
 const NotifyMeButton = ({ productId }) => {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
 
   const handleNotifyMe = async () => {
     if (!isAuthenticated) {
       toast.info('Please login to get notified');
-      navigate('/login');
+      router.push('/login');
       return;
     }
 

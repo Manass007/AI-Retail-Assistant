@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   Container,
   Grid,
@@ -22,8 +22,8 @@ import ProductGrid from '../components/product/ProductGrid';
 import NotifyMeButton from '../components/product/NotifyMeButton';
 
 const ProductDetailPage = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const router = useRouter();
+  const { id } = router.query;
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +48,7 @@ const ProductDetailPage = () => {
       }
     } catch (error) {
       toast.error('Failed to load product');
-      navigate('/products');
+      router.push('/products');
     } finally {
       setLoading(false);
     }
@@ -92,7 +92,7 @@ const ProductDetailPage = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Button
         startIcon={<ArrowBack />}
-        onClick={() => navigate(-1)}
+        onClick={() => router.back()}
         sx={{ mb: 3 }}
       >
         Back

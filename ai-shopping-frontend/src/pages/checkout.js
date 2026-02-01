@@ -30,13 +30,13 @@ import LocalGroceryStoreIcon from "@mui/icons-material/LocalGroceryStore";
 import StoreIcon from "@mui/icons-material/Store";
 import PaymentIcon from "@mui/icons-material/Payment";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { cart as cartApi, orders as ordersApi, stores, addresses as addressesApi, watchlist } from "@/lib/api";
 import WatchlistComboCard from "@/components/watchlist/WatchlistComboCard";
 
 export default function Checkout() {
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [cart, setCart] = useState(null);
   const [pickupStores, setPickupStores] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("pay_at_store");
@@ -62,7 +62,7 @@ export default function Checkout() {
   const [comboSuggestions, setComboSuggestions] = useState([]);
 
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       router.replace("/login");
       return;
     }
@@ -88,7 +88,7 @@ export default function Checkout() {
         setLoading(false);
       }
     })();
-  }, [isLoggedIn, router]);
+  }, [isAuthenticated, router]);
 
   const handlePlaceOrder = async () => {
     if (!cart?.cart?.length) return;
@@ -152,7 +152,7 @@ export default function Checkout() {
     }
   };
 
-  if (!isLoggedIn) return null;
+  if (!isAuthenticated) return null;
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>

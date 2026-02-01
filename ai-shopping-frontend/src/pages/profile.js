@@ -48,7 +48,7 @@ import BookmarkIcon from "@mui/icons-material/Bookmark";
 import StarsIcon from "@mui/icons-material/Stars";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useSnackbar } from "@/context/SnackbarContext";
 import { orders as ordersApi, auth as authApi, cart as cartApi, offers as offersApi, addresses as addressesApi, watchlist as watchlistApi, gamification as gamificationApi } from "@/lib/api";
 
@@ -57,7 +57,7 @@ const BUDGET_OPTIONS = [{ value: "low", label: "Budget-friendly" }, { value: "mi
 
 export default function Profile() {
   const router = useRouter();
-  const { user, isLoggedIn, logout, refreshUser } = useAuth();
+  const { user, isAuthenticated, logout, updateUser } = useAuth();
   const [orderList, setOrderList] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [orderHistoryOpen, setOrderHistoryOpen] = useState(true);
@@ -96,8 +96,8 @@ export default function Profile() {
   const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
-    if (!isLoggedIn) router.replace("/login");
-  }, [isLoggedIn, router]);
+    if (!isAuthenticated) router.replace("/login");
+  }, [isAuthenticated, router]);
 
   // After payment success (home delivery): show congratulations + earned coupon pop-up
   useEffect(() => {
@@ -131,7 +131,7 @@ export default function Profile() {
   }, [user?.onboarded, router.query.payment, router.query.order]);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     (async () => {
       setOrdersLoading(true);
       try {
@@ -143,10 +143,10 @@ export default function Profile() {
         setOrdersLoading(false);
       }
     })();
-  }, [isLoggedIn]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     (async () => {
       setWatchlistLoading(true);
       try {
@@ -158,10 +158,10 @@ export default function Profile() {
         setWatchlistLoading(false);
       }
     })();
-  }, [isLoggedIn, cartWatchlistTab]);
+  }, [isAuthenticated, cartWatchlistTab]);
 
   useEffect(() => {
-    if (!isLoggedIn || !couponsDialogOpen) return;
+    if (!isAuthenticated || !couponsDialogOpen) return;
     (async () => {
       try {
         const data = await offersApi.list();
@@ -170,10 +170,10 @@ export default function Profile() {
         setEarnedCouponsList([]);
       }
     })();
-  }, [isLoggedIn, couponsDialogOpen]);
+  }, [isAuthenticated, couponsDialogOpen]);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     (async () => {
       setAddressesLoading(true);
       try {
@@ -185,10 +185,10 @@ export default function Profile() {
         setAddressesLoading(false);
       }
     })();
-  }, [isLoggedIn]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isAuthenticated) return;
     (async () => {
       setPointsLoading(true);
       try {
@@ -200,7 +200,7 @@ export default function Profile() {
         setPointsLoading(false);
       }
     })();
-  }, [isLoggedIn]);
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
     logout();
@@ -227,7 +227,8 @@ export default function Profile() {
         dob: formDob ? new Date(formDob).toISOString().slice(0, 10) : undefined,
         preferences: { categories: formCategories, budget: formBudget },
       });
-      await refreshUser();
+      const data = await authApi.me();
+      if (data?.user) updateUser(data.user);
       setEditOpen(false);
       setOnboardingOpen(false);
       setCategoriesAnchor(null);
@@ -345,7 +346,7 @@ export default function Profile() {
     }
   };
 
-  if (!isLoggedIn) return null;
+  if (!isAuthenticated) return null;
 
   return (
     <>
